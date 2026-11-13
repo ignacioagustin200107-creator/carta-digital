@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#b5541c" id="themeColor">
+<title>Demo Carta Digital – Hamburguesería</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" id="gf" href="">
+<style>
+/* =========================================================
+   MOTOR DE ESTILOS
+   - Variables de color/letra/forma  -> :root (las pone JS)
+   - Personalidad (formato)          -> body.fmt-*
+   - Efecto de tarjetas              -> body.card-*
+   - Distribución                    -> body.layout-*
+   ========================================================= */
+:root{
+  --pri:#b5541c;--bg:#f4ede1;--card:#fffaf2;--txt:#3b2a1a;--onpri:#fff;--r:16px;
+  --fb:system-ui,sans-serif;--ft:system-ui,sans-serif;
+  --muted:color-mix(in srgb,var(--txt) 62%,transparent);
+  --line:color-mix(in srgb,var(--txt) 13%,transparent);
+  --pri-soft:color-mix(in srgb,var(--pri) 14%,transparent);
+  --ease:cubic-bezier(.2,.85,.25,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--txt);font-family:var(--fb);-webkit-font-smoothing:antialiased;
+  padding-bottom:calc(96px + env(safe-area-inset-bottom));transition:background-color .35s,color .35s;min-height:100vh;overflow-x:clip}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none}
+h1,h2,h3,.precio{font-family:var(--ft)}
+img{display:block;max-width:100%}
+button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:920px;margin:0 auto;padding:0 16px}
+
+/* ---------- HERO (base) ---------- */
+.hero{position:relative;text-align:center}
+.hero-bg{display:none}
+.hero-in{position:relative;z-index:1;padding:34px 16px 26px;max-width:920px;margin:0 auto}
+.logo{width:88px;height:88px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;font-size:46px;overflow:hidden}
+.logo img{width:100%;height:100%;object-fit:cover}
+.kicker{font-size:11px;letter-spacing:.32em;text-transform:uppercase;opacity:.85;margin-bottom:6px;font-weight:600}
+.hero h1{font-size:clamp(28px,7.6vw,46px);line-height:1.05}
+.slogan{margin-top:8px;opacity:.92;font-size:15px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px;font-size:13px}
+.meta span{padding:6px 12px;border-radius:999px}
+
+/* ---------- PROMO (base) ---------- */
+.promo{margin:18px 0 4px;border-radius:var(--r);padding:16px 18px;display:flex;gap:14px;align-items:center;position:relative;overflow:hidden;
+  background:linear-gradient(120deg,var(--pri),color-mix(in srgb,var(--pri) 62%,#000));color:var(--onpri);
+  box-shadow:0 14px 30px -14px var(--pri)}
+.promo::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);
+  transform:translateX(-100%);animation:shine 3.8s ease-in-out infinite}
+.promo .pe{font-size:38px;animation:bob 2.6s ease-in-out infinite;flex:none}
+.promo .tag{display:inline-block;font:800 10px/1 var(--fb);letter-spacing:.14em;padding:4px 7px;border-radius:6px;background:rgba(255,255,255,.22);margin-bottom:5px}
+.promo h2{font-size:19px;line-height:1.15}
+.promo p{font-size:14px;margin-top:3px;opacity:.95}
+
+/* ---------- NAV: buscador + categorías ---------- */
+.nav{position:sticky;top:0;z-index:20;margin:0 -16px;padding:12px 16px 10px;
+  background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3)}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 15px;margin-bottom:10px}
+.search input{border:none;outline:none;background:transparent;color:var(--txt);font:inherit;font-size:16px;flex:1;min-width:0}
+.search input::placeholder{color:var(--muted)}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:8px 15px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap;border:1.5px solid var(--pri);
+  color:var(--pri);background:transparent;transition:background .25s,color .25s,box-shadow .25s,transform .15s}
+.chip:active{transform:scale(.95)}
+.chip.on{background:var(--pri);color:var(--onpri)}
+
+/* ---------- SECCIONES ---------- */
+section.cat{padding-top:20px;scroll-margin-top:122px}
+.cat-h{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:22px}
+.cat-h .n{font:600 13px var(--fb);color:var(--muted)}
+.empty{text-align:center;padding:40px 10px;color:var(--muted);display:none}
+
+/* ---------- PRODUCTOS ---------- */
+.items{display:grid;gap:14px}
+.item{position:relative;border-radius:var(--r);overflow:hidden;cursor:pointer;color:var(--txt);display:flex;flex-direction:column;outline:none;
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),background-color .35s;-webkit-tap-highlight-color:transparent}
+.item:active{transform:scale(.965)}
+.item:focus-visible{outline:2px solid var(--pri);outline-offset:3px}
+@media(hover:hover){
+  .item:hover{transform:translateY(-4px)}
+  .item:hover .foto img,.item:hover .foto .em{transform:scale(1.07)}
+}
+.foto{position:relative;aspect-ratio:4/3;overflow:hidden;display:grid;place-items:center;flex:none;
+  background:radial-gradient(circle at 30% 22%,color-mix(in srgb,var(--pri) 55%,#fff),var(--pri) 55%,color-mix(in srgb,var(--pri) 55%,#000))}
+.foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease)}
+.foto .em{font-size:56px;filter:drop-shadow(0 10px 10px rgba(0,0,0,.3));transition:transform .6s var(--ease)}
+.info{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.info h3{font-size:16.5px;line-height:1.2}
+.info p{font-size:13.5px;line-height:1.4;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pr{margin-top:auto;padding-top:6px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.precio{font-weight:800;color:var(--pri);font-size:18px}
+.antes{color:var(--muted);font-size:13px}
+.go{display:none}
+.item.agotado{filter:grayscale(.9);opacity:.58}
+
+/* Distintivos */
+.badges{position:absolute;top:9px;left:9px;right:9px;z-index:2;display:flex;flex-wrap:wrap;gap:5px;pointer-events:none}
+.info .badges{position:static;margin-bottom:3px}
+.bd{font:800 11px/1 var(--fb);padding:5px 9px;border-radius:999px;white-space:nowrap}
+.bd-dest{background:linear-gradient(110deg,#ffc928 30%,#fff4bf 50%,#ffc928 70%);background-size:250% 100%;color:#3a2a00;
+  animation:shimmer 2.6s linear infinite;box-shadow:0 4px 14px rgba(255,180,0,.45)}
+.bd-off{background:#ff2d55;color:#fff;box-shadow:0 4px 14px rgba(255,45,85,.5);animation:pulse 1.8s ease-in-out infinite}
+.bd-sin{background:rgba(0,0,0,.78);color:#fff}
+
+/* ---------- EFECTOS DE TARJETA ---------- */
+.card-sombra .item{background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.05),0 10px 26px -10px rgba(0,0,0,.22)}
+@media(hover:hover){.card-sombra .item:hover{box-shadow:0 2px 4px rgba(0,0,0,.05),0 22px 40px -14px rgba(0,0,0,.3)}}
+.card-neumorfismo .item{background:var(--bg);
+  box-shadow:7px 7px 16px color-mix(in srgb,var(--bg) 72%,#000),-7px -7px 16px color-mix(in srgb,var(--bg) 60%,#fff)}
+.card-neumorfismo .item:active{box-shadow:inset 5px 5px 12px color-mix(in srgb,var(--bg) 72%,#000),inset -5px -5px 12px color-mix(in srgb,var(--bg) 60%,#fff)}
+.card-neumorfismo .item .foto{margin:9px 9px 0;border-radius:calc(var(--r) - 4px)}
+.card-vidrio .item{background:color-mix(in srgb,var(--card) 52%,transparent);-webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5);
+  border:1px solid color-mix(in srgb,#fff 40%,transparent);box-shadow:0 10px 32px -10px rgba(0,0,0,.25)}
+.card-borde .item{background:var(--card);border:1px solid var(--line)}
+
+/* ---------- DISTRIBUCIÓN ---------- */
+.layout-grilla .items{grid-template-columns:repeat(auto-fill,minmax(155px,1fr))}
+.layout-grilla .info h3{font-size:15.5px}
+.layout-grande .items{grid-template-columns:1fr}
+.layout-grande .items .foto{aspect-ratio:16/10}
+.layout-grande .items .foto .em{font-size:86px}
+.layout-lista .items{grid-template-columns:1fr}
+.layout-lista .items .bd{font-size:10px;padding:4px 7px}
+.layout-lista .item{flex-direction:row;min-height:118px}
+.layout-lista .items .foto{width:120px;aspect-ratio:auto}
+.layout-lista .items .foto .em{font-size:42px}
+.layout-lista.card-neumorfismo .item .foto{margin:9px 0 9px 9px}
+@media(min-width:640px){.layout-grande .items,.layout-lista .items{grid-template-columns:1fr 1fr}}
+
+/* =========================================================
+   PERSONALIDADES (FORMATOS)
+   ========================================================= */
+
+/* ---- CLÁSICO: cálido, parrilla, encabezado curvo ---- */
+.fmt-clasico .hero{background:var(--pri);color:var(--onpri);padding-bottom:22px;overflow:hidden}
+.fmt-clasico .hero::after{content:"";position:absolute;left:-10%;right:-10%;bottom:-36px;height:60px;background:var(--bg);border-radius:50% 50% 0 0}
+.fmt-clasico .logo{background:rgba(255,255,255,.18);border:3px solid rgba(255,255,255,.55);box-shadow:0 12px 30px rgba(0,0,0,.22)}
+.fmt-clasico .meta span{background:rgba(0,0,0,.18)}
+.fmt-clasico .promo{background:var(--card);color:var(--txt);border:2px dashed var(--pri);box-shadow:none}
+.fmt-clasico .promo h2{color:var(--pri)}
+.fmt-clasico .promo .tag{background:var(--pri);color:var(--onpri)}
+.fmt-clasico .cat-h::after{content:"";flex:1;height:2px;background:color-mix(in srgb,var(--pri) 28%,transparent)}
+
+/* ---- LUJO: minimalista de alta gama ---- */
+.fmt-lujo .hero-in{padding:52px 20px 30px}
+.fmt-lujo .logo{width:74px;height:74px;font-size:34px;border:1px solid var(--pri);background:transparent;padding:4px}
+.fmt-lujo .logo img{border-radius:50%}
+.fmt-lujo .kicker{color:var(--pri);letter-spacing:.5em}
+.fmt-lujo .kicker::before,.fmt-lujo .kicker::after{content:"";display:inline-block;width:26px;height:1px;background:var(--pri);vertical-align:middle;margin:0 10px}
+.fmt-lujo .hero h1{font-weight:500;letter-spacing:.01em;font-size:clamp(36px,10vw,60px)}
+.fmt-lujo .slogan{font-style:italic;color:var(--muted)}
+.fmt-lujo .meta span{padding:0 4px;color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.fmt-lujo .hero::after{content:"";display:block;width:56px;height:1px;background:var(--pri);margin:0 auto}
+.fmt-lujo .promo{background:transparent;color:var(--txt);border:1px solid var(--pri);box-shadow:none;flex-direction:column;text-align:center;gap:4px;padding:22px}
+.fmt-lujo .promo::after{display:none}
+.fmt-lujo .promo h2{font-weight:500;font-size:24px;color:var(--pri)}
+.fmt-lujo .promo .tag{background:none;color:var(--muted);letter-spacing:.35em}
+.fmt-lujo .promo .pe{font-size:28px;animation:none}
+.fmt-lujo .search{background:transparent;border:none;border-bottom:1px solid var(--line);border-radius:0;padding-left:2px}
+.fmt-lujo .chip{border:none;border-radius:0;padding:8px 2px;margin-right:14px;color:var(--muted);text-transform:uppercase;font-size:11.5px;letter-spacing:.16em;border-bottom:1px solid transparent}
+.fmt-lujo .chip.on{background:none;color:var(--txt);border-bottom-color:var(--pri)}
+.fmt-lujo .cat-h{justify-content:center;font-weight:500;font-size:28px;margin:22px 0 20px}
+.fmt-lujo .cat-h .n{display:none}
+.fmt-lujo .cat-h::before,.fmt-lujo .cat-h::after{content:"";width:28px;height:1px;background:var(--pri)}
+.fmt-lujo .items{gap:22px}
+.fmt-lujo .item .foto,.fmt-lujo .det .foto{background:color-mix(in srgb,var(--pri) 12%,var(--card))}
+.fmt-lujo .foto .em{filter:none}
+.fmt-lujo .info{padding:16px}
+.fmt-lujo .info h3{font-weight:600;font-size:21px}
+.fmt-lujo .precio{font-weight:600;color:var(--txt);font-size:20px}
+.fmt-lujo .bd{background:var(--card);color:var(--pri);border:1px solid var(--pri);box-shadow:none;animation:none;font-weight:600;text-transform:uppercase;letter-spacing:.14em;font-size:9.5px;border-radius:0;padding:5px 8px}
+.fmt-lujo .bd-off{background:var(--pri);color:var(--onpri)}
+@media(hover:hover){.fmt-lujo .item:hover{transform:none}}
+
+/* ---- NOCHE: moderno, alto contraste, neón ---- */
+body.fmt-noche::before{background:radial-gradient(70% 45% at 50% -5%,color-mix(in srgb,var(--pri) 38%,transparent),transparent 70%)}
+.fmt-noche .hero h1{text-transform:uppercase;letter-spacing:.06em;text-shadow:0 0 26px color-mix(in srgb,var(--pri) 75%,transparent)}
+.fmt-noche .kicker{color:var(--pri)}
+.fmt-noche .logo{background:var(--card);box-shadow:0 0 0 2px var(--pri),0 0 34px color-mix(in srgb,var(--pri) 65%,transparent)}
+.fmt-noche .meta span{border:1px solid var(--line);background:color-mix(in srgb,var(--card) 70%,transparent)}
+.fmt-noche .promo{background:var(--card);color:var(--txt);border:1px solid var(--pri);box-shadow:0 0 36px -8px color-mix(in srgb,var(--pri) 70%,transparent)}
+.fmt-noche .promo h2{color:var(--pri);text-transform:uppercase;letter-spacing:.04em}
+.fmt-noche .promo .tag{background:var(--pri);color:var(--onpri)}
+.fmt-noche .chip{border:1px solid var(--line);color:var(--txt);background:var(--card)}
+.fmt-noche .chip.on{background:var(--pri);color:var(--onpri);border-color:var(--pri);box-shadow:0 0 20px color-mix(in srgb,var(--pri) 65%,transparent)}
+.fmt-noche .cat-h{text-transform:uppercase;letter-spacing:.06em}
+.fmt-noche .cat-h::before{content:"";width:4px;height:22px;border-radius:4px;background:var(--pri);box-shadow:0 0 14px var(--pri)}
+.fmt-noche .info h3{text-transform:uppercase;letter-spacing:.03em}
+.fmt-noche .item.dest{box-shadow:0 0 0 1px var(--pri),0 0 30px -6px var(--pri)}
+.fmt-noche .bd-dest{background:var(--pri);color:var(--onpri);animation:glow 2s ease-in-out infinite;box-shadow:0 0 16px var(--pri)}
+
+/* ---- DELIVERY: estilo app, dinámico ---- */
+.fmt-delivery .hero{text-align:left}
+.fmt-delivery .hero-bg{display:block;height:150px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--pri),color-mix(in srgb,var(--pri) 58%,#000))}
+.fmt-delivery .hero-bg::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.08) 0 14px,transparent 14px 28px)}
+.fmt-delivery .hero-in{margin:-58px 14px 0;background:var(--card);border-radius:calc(var(--r) + 6px);padding:16px;display:grid;grid-template-columns:auto 1fr;gap:2px 14px;align-items:center;
+  box-shadow:0 16px 34px -14px rgba(0,0,0,.3)}
+@media(min-width:950px){.fmt-delivery .hero-in{margin:-58px auto 0;max-width:888px}}
+.fmt-delivery .logo{width:66px;height:66px;border-radius:18px;margin:0;font-size:34px;background:var(--pri-soft)}
+.fmt-delivery .kicker{display:none}
+.fmt-delivery .hero h1{font-size:23px}
+.fmt-delivery .slogan{font-size:13px;color:var(--muted);margin-top:3px}
+.fmt-delivery .meta{grid-column:1/-1;justify-content:flex-start;margin-top:12px;gap:6px}
+.fmt-delivery .meta span{background:var(--bg);font-size:12px;padding:6px 10px;font-weight:600}
+.fmt-delivery .search{border:none;box-shadow:0 2px 10px -2px rgba(0,0,0,.12);border-radius:14px}
+.fmt-delivery .chip{border:none;background:var(--card);color:var(--txt);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.fmt-delivery .chip.on{background:var(--txt);color:var(--bg)}
+.fmt-delivery .cat-h{font-size:20px;font-weight:800}
+.fmt-delivery .info h3{font-weight:700}
+.fmt-delivery .go{display:grid;place-items:center;position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;z-index:2;
+  background:var(--pri);color:var(--onpri);font:700 22px/1 var(--fb);box-shadow:0 6px 16px -4px var(--pri);transition:transform .2s}
+.fmt-delivery .item:active .go{transform:scale(1.2)}
+.fmt-delivery.layout-lista .item{flex-direction:row-reverse}
+.fmt-delivery.layout-lista .items .foto{width:116px;margin:10px;border-radius:calc(var(--r) - 4px)}
+.fmt-delivery.layout-lista .info{padding-right:4px}
+.fmt-delivery .bd-dest{background:#fff;color:#111;animation:none;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+
+/* ---- CRISTAL: glassmorphism vibrante ---- */
+body.fmt-cristal::before{background:
+  radial-gradient(42% 32% at 8% 6%,color-mix(in srgb,var(--pri) 70%,transparent),transparent 70%),
+  radial-gradient(45% 38% at 96% 26%,color-mix(in srgb,var(--pri) 40%,#ec4899 45%),transparent 70%),
+  radial-gradient(55% 40% at 25% 92%,color-mix(in srgb,var(--pri) 30%,#06b6d4 50%),transparent 70%)}
+.fmt-cristal .hero-in{margin:18px auto 0;max-width:min(560px,calc(100% - 28px));background:color-mix(in srgb,var(--card) 45%,transparent);
+  -webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);border:1px solid rgba(255,255,255,.45);
+  border-radius:calc(var(--r) + 10px);box-shadow:0 14px 40px -12px rgba(0,0,0,.2)}
+.fmt-cristal .logo{background:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.65)}
+.fmt-cristal .kicker{color:var(--pri)}
+.fmt-cristal .meta span{background:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.5)}
+.fmt-cristal .nav{background:color-mix(in srgb,var(--bg) 40%,transparent)}
+.fmt-cristal .search{background:color-mix(in srgb,var(--card) 50%,transparent);border-color:rgba(255,255,255,.5)}
+.fmt-cristal .chip{background:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.55);color:var(--txt)}
+.fmt-cristal .chip.on{background:var(--pri);color:var(--onpri);border-color:var(--pri)}
+
+/* ---------- DETALLE (hoja inferior con transición desde la tarjeta) ---------- */
+.ov{position:fixed;inset:0;z-index:50;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0);transition:background-color .3s}
+.ov.open{display:flex}
+.ov.show{background:rgba(0,0,0,.55)}
+.det{position:relative;background:var(--card);color:var(--txt);font-family:var(--fb);width:100%;max-width:520px;max-height:92vh;overflow-y:auto;overscroll-behavior:contain;
+  border-radius:calc(var(--r) + 12px) calc(var(--r) + 12px) 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.25);will-change:transform}
+@media(min-width:600px){.ov{align-items:center}.det{border-radius:calc(var(--r) + 12px)}}
+.det .foto{aspect-ratio:16/11}
+.det .foto .em{font-size:100px}
+.det .handle{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:42px;height:5px;border-radius:9px;background:rgba(255,255,255,.75);z-index:3}
+.det .badges{top:22px}
+.det .body{padding:20px 20px calc(22px + env(safe-area-inset-bottom))}
+.det h2{font-size:26px;line-height:1.15}
+.det p.d{color:var(--muted);margin:8px 0 14px;line-height:1.5}
+.det .precio{font-size:28px}
+.det .ahorro{display:inline-block;margin-top:6px;font:700 13px var(--fb);color:#ff2d55}
+.det .nostock{margin-top:10px;font-weight:700}
+.det .cerrar{margin-top:18px;width:100%;padding:15px;border:none;border-radius:var(--r);background:var(--pri);color:var(--onpri);font-weight:700;font-size:15px}
+.fmt-lujo .det .cerrar{background:transparent;color:var(--txt);border:1px solid var(--txt);text-transform:uppercase;letter-spacing:.2em;font-size:12px}
+
+footer{text-align:center;padding:34px 16px;font-size:12.5px;color:var(--muted)}
+
+/* ---------- ANIMACIONES ---------- */
+.rv:not(.in){opacity:0}
+.rv.in{animation:rise .55s var(--ease) backwards}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}}
+@keyframes shine{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@keyframes bob{50%{transform:translateY(-4px) rotate(-6deg)}}
+@keyframes shimmer{to{background-position:-250% 0}}
+@keyframes pulse{50%{transform:scale(1.08)}}
+@keyframes glow{50%{box-shadow:0 0 4px var(--pri)}}
+body.noanim #app *,body.noanim .ov *{animation:none!important;transition:none!important}
+body.noanim .rv{opacity:1}
+@media(prefers-reduced-motion:reduce){#app *,.ov *{animation:none!important;transition:none!important}.rv{opacity:1}}
+
+/* =========================================================
+   PANEL DEL DUEÑO (estilo propio, no cambia con el formato)
+   ========================================================= */
+.adm{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1d1d1f}
+.fab.adm,.demo-tag.adm,.toast.adm{color:#fff}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;background:#111;border:none;border-radius:999px;padding:13px 18px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.demo-tag{position:fixed;left:12px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:40;background:rgba(0,0,0,.72);font-weight:700;font-size:11px;padding:5px 9px;border-radius:6px;letter-spacing:1px}
+.login-ov{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center}
+.login-ov.open{display:flex}
+.login{background:#fff;border-radius:18px;padding:24px;width:min(340px,92%);text-align:center}
+.login h3{font-size:19px;margin-bottom:6px}
+.login input{width:100%;font-size:22px;text-align:center;letter-spacing:8px;padding:10px;border:1.5px solid #ccc;border-radius:10px;margin:14px 0 8px}
+.login .err{color:#d00;font-size:13px;min-height:18px}
+.btn{border:none;border-radius:10px;padding:11px 14px;font-weight:600;font-size:14px;background:#111;color:#fff}
+.btn.sec{background:#eee;color:#111}
+.btn.dan{background:#fdecec;color:#c00}
+.btn.full{width:100%}
+.mini{font-size:12.5px;padding:8px 10px}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:#f6f6f8;z-index:60;box-shadow:-10px 0 40px rgba(0,0,0,.25);display:flex;flex-direction:column;transform:translateX(105%);transition:transform .3s ease}
+.drawer.open{transform:none}
+.dh{background:#111;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.dh h3{flex:1;font-size:16px}
+.dh button{background:#333;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e3e3e6}
+.tabs button{flex:1;border:none;background:none;padding:12px 2px;font-size:12.5px;font-weight:600;color:#777;border-bottom:3px solid transparent}
+.tabs button.on{color:#111;border-color:#111}
+.dbody{flex:1;overflow-y:auto;padding:16px;overscroll-behavior:contain}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid #ececf0}
+.card h4{font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;color:#888;margin-bottom:10px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:13px;font-weight:600;color:#444}
+.field input[type=text],.field input[type=number],.field input[type=tel],.field textarea,.field select{font:inherit;font-size:15px;padding:9px 11px;border:1.5px solid #ddd;border-radius:9px;background:#fff;width:100%;color:#111}
+.field textarea{resize:vertical;min-height:60px}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+.colors{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.colors label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#444;background:#f6f6f8;padding:6px 8px;border-radius:9px}
+.colors input{width:34px;height:34px;border:none;background:none;padding:0}
+.temas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tema{border:2px solid #e3e3e6;border-radius:12px;padding:9px 10px;background:#fff;text-align:left;display:flex;flex-direction:column;gap:5px}
+.tema.on{border-color:#111;box-shadow:0 0 0 2px #111 inset}
+.tema .sw{display:flex;gap:4px}
+.tema .sw i{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
+.tema b{font-size:13px}
+.tema code{font-size:10.5px;color:#888}
+.seg{display:flex;background:#eee;border-radius:10px;padding:3px;flex-wrap:wrap}
+.seg button{flex:1;border:none;background:none;padding:8px 4px;border-radius:8px;font-size:12.5px;font-weight:600;color:#555;min-width:70px}
+.seg button.on{background:#fff;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.tog{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:14px;font-weight:600;color:#333}
+.sw2{position:relative;width:46px;height:27px;flex:none}
+.sw2 input{opacity:0;width:0;height:0}
+.sw2 span{position:absolute;inset:0;background:#ccc;border-radius:999px;transition:.2s}
+.sw2 span::before{content:"";position:absolute;width:21px;height:21px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.sw2 input:checked+span{background:#22a55b}
+.sw2 input:checked+span::before{transform:translateX(19px)}
+.code-card{border:2px solid #111}
+.code-card textarea{width:100%;font:600 15px ui-monospace,SFMono-Regular,Menlo,monospace;padding:10px 12px;border:1.5px solid #ccc;border-radius:10px;resize:vertical;min-height:58px;color:#111;background:#fafafa}
+.code-card textarea:focus{outline:none;border-color:#111;background:#fff}
+.fb{margin:8px 0 10px;display:flex;flex-wrap:wrap;gap:5px;min-height:10px}
+.fb span{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:6px}
+.fb .ok{background:#e7f7ee;color:#137a3e}
+.fb .bad{background:#fdecec;color:#c00}
+.help{margin-top:10px;font-size:13px;color:#444}
+.help summary{cursor:pointer;font-weight:600;color:#111}
+.help table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
+.help td{padding:5px 4px;border-top:1px solid #eee;vertical-align:top}
+.help td:first-child{font-family:ui-monospace,Menlo,monospace;font-weight:700;white-space:nowrap}
+.help p{margin-top:8px;line-height:1.45}
+.help code{background:#f1f1f3;padding:1px 5px;border-radius:4px;font-size:12px}
+.prod{border:1px solid #ececf0;border-radius:10px;margin-bottom:8px;background:#fff}
+.prod summary{list-style:none;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px}
+.prod summary::-webkit-details-marker{display:none}
+.prod summary .n{flex:1;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prod summary .p{color:#666;font-size:13px}
+.prod summary .e{font-size:20px}
+.prod .pb{padding:4px 12px 12px;border-top:1px solid #f0f0f0}
+.tagx{font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:#222;color:#fff}
+.tagx.of{background:#ff2d55}
+.cathead{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.cathead input{font:inherit;font-weight:700;font-size:15px;padding:7px 9px;border:1.5px solid #ddd;border-radius:9px;flex:1;min-width:0}
+.cathead input.em{flex:none;width:48px;text-align:center}
+.upl{display:flex;gap:8px;align-items:center}
+.upl .th{width:48px;height:48px;border-radius:9px;background:#eee;display:grid;place-items:center;overflow:hidden;font-size:24px;flex:none}
+.upl .th img{width:100%;height:100%;object-fit:cover}
+.upl label.btn{display:inline-block;cursor:pointer}
+.upl input[type=file]{display:none}
+.hint{font-size:12px;color:#888;margin-top:4px;line-height:1.4}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#111;font-weight:600;font-size:13px;padding:10px 16px;border-radius:999px;opacity:0;transition:.25s;z-index:80;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<div class="ov" id="detOv"><div class="det" id="det" role="dialog" aria-modal="true"></div></div>
+
+<div class="demo-tag adm">DEMO</div>
+<button class="fab adm" id="fab">⚙️ Modo dueño</button>
+
+<div class="login-ov adm" id="loginOv">
+  <div class="login">
+    <h3>🔒 Panel del dueño</h3>
+    <div class="hint">Ingresá el PIN para editar la carta.<br><b>PIN de la demo: 1234</b></div>
+    <input id="pin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off">
+    <div class="err" id="pinErr"></div>
+    <div class="row"><button class="btn sec" id="loginCancel">Cancelar</button><button class="btn" id="loginOk">Entrar</button></div>
+  </div>
+</div>
+
+<aside class="drawer adm" id="drawer">
+  <div class="dh"><h3>⚙️ Editar carta</h3><button id="verCliente">👁 Ver como cliente</button></div>
+  <div class="tabs" id="tabs">
+    <button data-tab="diseno" class="on">🎨 Diseño</button>
+    <button data-tab="local">🏠 Local</button>
+    <button data-tab="promo">🔥 Promo</button>
+    <button data-tab="productos">🍔 Productos</button>
+  </div>
+  <div class="dbody" id="panel"></div>
+</aside>
+
+<div class="toast adm" id="toast"></div>
+
+<script>
+/* =========================================================
+   CATÁLOGOS
+   ========================================================= */
+const FUENTES = {
+  Sistema:   {css:"system-ui,-apple-system,'Segoe UI',Roboto,sans-serif", g:null},
+  Inter:     {css:"'Inter',system-ui,sans-serif",       g:"Inter:wght@400;600;800"},
+  Poppins:   {css:"'Poppins',sans-serif",               g:"Poppins:wght@400;600;700;800"},
+  Montserrat:{css:"'Montserrat',sans-serif",            g:"Montserrat:wght@400;600;800"},
+  Nunito:    {css:"'Nunito',sans-serif",                g:"Nunito:wght@400;600;800"},
+  Space:     {css:"'Space Grotesk',sans-serif",         g:"Space+Grotesk:wght@400;600;700"},
+  Oswald:    {css:"'Oswald',sans-serif",                g:"Oswald:wght@400;500;600"},
+  Bitter:    {css:"'Bitter',serif",                     g:"Bitter:wght@400;600;700"},
+  Playfair:  {css:"'Playfair Display',serif",           g:"Playfair+Display:wght@500;600;700"},
+  Cormorant: {css:"'Cormorant Garamond',serif",         g:"Cormorant+Garamond:wght@500;600;700"},
+  Caveat:    {css:"'Caveat',cursive",                   g:"Caveat:wght@600;700"}
+};
+const FORMATOS = {clasico:"Clásico", lujo:"Alta gama", noche:"Nocturno", delivery:"App delivery", cristal:"Cristal"};
+const EFECTOS  = {sombra:"Sombra", neumorfismo:"Neumorfismo", vidrio:"Vidrio", borde:"Borde fino"};
+const LAYOUTS  = {grilla:"▦ Grilla", lista:"☰ Lista", grande:"▭ Grande"};
+const BADGE_DEST = {clasico:"⭐ Recomendado", lujo:"Del chef", noche:"★ Top", delivery:"🔥 Más pedido", cristal:"✨ Favorito"};
+const LABEL_DEST = {clasico:"⭐ Recomendado", lujo:"Sugerencia del chef", noche:"★ Top", delivery:"🔥 Más pedido", cristal:"✨ Favorito"};
+
+/* Plantillas = códigos de formato listos para usar */
+const CODIGOS = {
+  clasico: {nombre:"Clásico parrilla", formato:"clasico", pri:"#b5541c", bg:"#f4ede1", card:"#fffaf2", txt:"#3b2a1a", fb:"Nunito",     ft:"Bitter",    r:16, efecto:"sombra",      layout:"grilla"},
+  lujo:    {nombre:"Alta gama",        formato:"lujo",    pri:"#9a7b4f", bg:"#f7f4ee", card:"#fffdf8", txt:"#1c1a17", fb:"Montserrat", ft:"Cormorant", r:2,  efecto:"borde",       layout:"grande"},
+  noche:   {nombre:"Nocturno",         formato:"noche",   pri:"#ff2d55", bg:"#0a0a0f", card:"#15151d", txt:"#f5f5f7", fb:"Inter",      ft:"Oswald",    r:14, efecto:"sombra",      layout:"grilla"},
+  delivery:{nombre:"App delivery",     formato:"delivery",pri:"#ff4d00", bg:"#f2f3f5", card:"#ffffff", txt:"#111827", fb:"Poppins",    ft:"Poppins",   r:18, efecto:"sombra",      layout:"lista"},
+  cristal: {nombre:"Cristal",          formato:"cristal", pri:"#7c3aed", bg:"#f5f3ff", card:"#ffffff", txt:"#1e1b4b", fb:"Space",      ft:"Space",     r:22, efecto:"vidrio",      layout:"grilla"},
+  oro:     {nombre:"Oro negro",        formato:"lujo",    pri:"#d4af37", bg:"#0e0d0b", card:"#17150f", txt:"#f3ead8", fb:"Montserrat", ft:"Playfair",  r:0,  efecto:"borde",       layout:"lista"},
+  neon:    {nombre:"Neón",             formato:"noche",   pri:"#00e5ff", bg:"#05060a", card:"#0d1018", txt:"#e8fbff", fb:"Space",      ft:"Space",     r:20, efecto:"vidrio",      layout:"grilla"},
+  pizarra: {nombre:"Pizarrón",         formato:"clasico", pri:"#f2c14e", bg:"#263029", card:"#2f3a33", txt:"#f1f1e8", fb:"Nunito",     ft:"Caveat",    r:12, efecto:"borde",       layout:"lista"},
+  fresh:   {nombre:"Fresh",            formato:"delivery",pri:"#16a34a", bg:"#ecfdf3", card:"#ffffff", txt:"#052e16", fb:"Inter",      ft:"Inter",     r:22, efecto:"sombra",      layout:"grilla"},
+  suave:   {nombre:"Suave",            formato:"clasico", pri:"#e76f51", bg:"#e8ecf1", card:"#e8ecf1", txt:"#2b2d42", fb:"Nunito",     ft:"Poppins",   r:24, efecto:"neumorfismo", layout:"grilla"}
+};
+const ESTILO_KEYS = ["formato","pri","bg","card","txt","fb","ft","r","efecto","layout"];
+const fromCodigo = k => Object.fromEntries(ESTILO_KEYS.map(x=>[x,CODIGOS[k][x]]));
+
+/* =========================================================
+   DATOS INICIALES
+   ========================================================= */
+let uid = 100;
+const P = (cat,nombre,desc,precio,emoji,extra={}) => ({id:"p"+(uid++),cat,nombre,desc,precio,precioAntes:0,emoji,foto:null,stock:true,destacado:false,...extra});
+const DEF = {
+  local:{nombre:"La Brasa Burger", slogan:"Hamburguesas a la parrilla, como en casa", emoji:"🍔", logo:null,
+         horario:"Mar a Dom · 19 a 00 h", direccion:"Av. Pellegrini 1234", whatsapp:"341 555-1234"},
+  estilo:{tema:"clasico", codigo:"CLASICO", ...fromCodigo("clasico"), fotos:true, desc:true, anim:true},
+  promo:{activa:true, emoji:"🔥", titulo:"Martes 2x1 en Clásicas", texto:"Todos los martes, llevás 2 hamburguesas clásicas al precio de 1."},
+  categorias:[
+    {id:"c1",nombre:"Hamburguesas",emoji:"🍔"},{id:"c2",nombre:"Combos",emoji:"🍟"},
+    {id:"c3",nombre:"Para acompañar",emoji:"🧀"},{id:"c4",nombre:"Bebidas",emoji:"🥤"},{id:"c5",nombre:"Postres",emoji:"🍦"}
+  ],
+  productos:[
+    P("c1","Clásica","Medallón de 150 g, lechuga, tomate, cebolla y salsa de la casa.",11500,"🍔"),
+    P("c1","Doble Cheddar","Doble medallón, doble cheddar y pepinos.",14900,"🍔",{destacado:true}),
+    P("c1","Bacon BBQ","Medallón, panceta crocante, cheddar, cebolla caramelizada y barbacoa.",15900,"🥓",{destacado:true}),
+    P("c1","Criolla","Medallón, provoleta, morrón asado y chimichurri.",15500,"🌶️"),
+    P("c1","Veggie","Medallón de garbanzos y quinoa, palta, rúcula y tomate.",13900,"🥬"),
+    P("c2","Combo Clásico","Hamburguesa Clásica + papas medianas + gaseosa.",16900,"🍟"),
+    P("c2","Combo Doble","Doble Cheddar + papas grandes + gaseosa.",20500,"🍟",{destacado:true,precioAntes:23900}),
+    P("c3","Papas fritas","Porción mediana con sal y romero.",6500,"🍟"),
+    P("c3","Papas cheddar y panceta","Porción grande bañada en cheddar.",9500,"🧀",{precioAntes:11000}),
+    P("c3","Aros de cebolla","8 unidades con dip de alioli.",7200,"🧅",{stock:false}),
+    P("c4","Gaseosa 500 ml","Línea Coca-Cola.",3500,"🥤"),
+    P("c4","Cerveza artesanal","Pinta de IPA o Rubia.",5800,"🍺"),
+    P("c4","Agua sin gas","500 ml.",2800,"💧"),
+    P("c5","Brownie con helado","Brownie tibio con bocha de crema americana.",7500,"🍫"),
+    P("c5","Flan casero","Con dulce de leche o crema.",5900,"🍮")
+  ]
+};
+const clone = o => JSON.parse(JSON.stringify(o));
+
+/* =========================================================
+   ESTADO (localStorage) + migración desde la versión anterior
+   ========================================================= */
+const KEY = "cartaDemo_v2", OLD_KEY = "cartaDemo_v1";
+function migrate(s){
+  const d = clone(DEF), e = s.estilo || {};
+  s.local = {...d.local, ...s.local};
+  s.promo = {...d.promo, ...s.promo};
+  const viejo = {rustico:"clasico", oscuro:"noche", colorido:"delivery", minimal:"lujo"};
+  s.estilo = {...d.estilo, ...e};
+  if (!e.formato) s.estilo.formato = viejo[e.tema] || "clasico";
+  if (e.font && !e.fb) { s.estilo.fb = s.estilo.ft = FUENTES[e.font] ? e.font : "Nunito"; }
+  delete s.estilo.font;
+  if (!FUENTES[s.estilo.fb]) s.estilo.fb = "Nunito";
+  if (!FUENTES[s.estilo.ft]) s.estilo.ft = s.estilo.fb;
+  s.categorias = s.categorias || d.categorias;
+  s.productos = (s.productos || d.productos).map(p => ({precioAntes:0, ...p}));
+  return s;
+}
+let S;
+try {
+  const raw = localStorage.getItem(KEY) || localStorage.getItem(OLD_KEY);
+  S = raw ? migrate(JSON.parse(raw)) : clone(DEF);
+} catch(e) { S = clone(DEF); }
+let saveT;
+function save(){
+  clearTimeout(saveT);
+  saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast("⚠️ No se pudo guardar (¿foto muy pesada?)"); } }, 300);
+}
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const NF = new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0});
+const fmt = n => NF.format(n||0);
+const off = p => (p.precioAntes > p.precio && p.precio > 0) ? Math.round((1 - p.precio/p.precioAntes)*100) : 0;
+const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const animOn = () => S.estilo.anim && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900)}
+function setPath(path,val){const k=path.split(".");let o=S;for(let i=0;i<k.length-1;i++)o=o[k[i]];o[k.at(-1)]=val}
+function getPath(path){return path.split(".").reduce((o,k)=>o?.[k],S)}
+function onColor(hex){
+  const h=hex.replace("#",""); const [r,g,b]=[0,2,4].map(i=>parseInt(h.substr(i,2),16)/255).map(c=>c<=.03928?c/12.92:((c+.055)/1.055)**2.4);
+  return (.2126*r+.7152*g+.0722*b) > .45 ? "#111111" : "#ffffff";
+}
+function resizeImg(file,max=640){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>{const im=new Image();im.onload=()=>{
+      const sc=Math.min(1,max/Math.max(im.width,im.height));
+      const c=document.createElement("canvas");c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);
+      c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.8));
+    };im.onerror=rej;im.src=fr.result};
+    fr.onerror=rej;fr.readAsDataURL(file);
+  });
+}
+
+/* =========================================================
+   MOTOR DE ESTILOS: aplica variables + clases
+   ========================================================= */
+function loadFonts(){
+  const fams=[...new Set([S.estilo.fb,S.estilo.ft])].map(k=>FUENTES[k]?.g).filter(Boolean);
+  const href=fams.length?`https://fonts.googleapis.com/css2?${fams.map(f=>"family="+f).join("&")}&display=swap`:"";
+  const l=$("#gf"); if(l.getAttribute("href")!==href) l.setAttribute("href",href);
+}
+function applyStyle(){
+  const e=S.estilo, r=document.documentElement.style;
+  r.setProperty("--pri",e.pri); r.setProperty("--bg",e.bg); r.setProperty("--card",e.card); r.setProperty("--txt",e.txt);
+  r.setProperty("--onpri",onColor(e.pri)); r.setProperty("--r",e.r+"px");
+  r.setProperty("--fb",FUENTES[e.fb].css); r.setProperty("--ft",FUENTES[e.ft].css);
+  document.body.className=`fmt-${e.formato} card-${e.efecto} layout-${e.layout}${e.anim?"":" noanim"}${e.fotos?"":" nofotos"}`;
+  $("#themeColor").content = e.formato==="clasico" ? e.pri : e.bg;
+  loadFonts();
+}
+
+/* =========================================================
+   CÓDIGO DE FORMATO
+   Sintaxis:  BASE  clave=valor  clave=valor ...
+   Ej:  NOCHE        |   NEON radio=24 vista=lista
+        formato=lujo; color=#c9a227; letra=Inter; titulos=Playfair
+   ========================================================= */
+const CLAVES = {
+  formato:"formato", estilo:"formato", personalidad:"formato",
+  color:"pri", principal:"pri", fondo:"bg", superficie:"card", tarjetas:"card", texto:"txt",
+  letra:"fb", fuente:"fb", titulos:"ft",
+  radio:"r", bordes:"r", vista:"layout", distribucion:"layout", layout:"layout",
+  efecto:"efecto", tarjeta:"efecto", anim:"anim", animaciones:"anim", fotos:"fotos", desc:"desc", descripciones:"desc"
+};
+function validar(campo, v){
+  const vn = norm(v).replace(/"/g,"");
+  const si = ["si","on","true","1"], no = ["no","off","false","0"];
+  switch(campo){
+    case "pri": case "bg": case "card": case "txt": {
+      let m = vn.match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/); if(!m) return null;
+      let h = m[1]; if(h.length===3) h=[...h].map(c=>c+c).join(""); return "#"+h;
+    }
+    case "fb": case "ft": return Object.keys(FUENTES).find(k=>norm(k)===vn.split(/\s+/)[0]) || null;
+    case "r": { const n=parseInt(vn,10); return isNaN(n)?null:Math.max(0,Math.min(32,n)); }
+    case "formato": return FORMATOS[vn] ? vn : (vn==="glass"?"cristal":null);
+    case "layout": return LAYOUTS[vn] ? vn : null;
+    case "efecto": return EFECTOS[vn] ? vn : (vn==="neumorfico"?"neumorfismo":null);
+    case "anim": case "fotos": case "desc": return si.includes(vn) ? true : no.includes(vn) ? false : null;
+  }
+  return null;
+}
+function parseCodigo(str){
+  const patch = {}, ok = [], bad = []; let base = null;
+  const pares = [];
+  const resto = String(str).replace(/([a-záéíóúñ]+)\s*[:=]\s*("[^"]*"|[^;\s,]+)/gi, (_,k,v)=>{ pares.push([k,v]); return " "; });
+  resto.split(/[\s;,]+/).filter(Boolean).forEach(w=>{
+    const k = norm(w);
+    if (CODIGOS[k]) { Object.assign(patch, fromCodigo(k)); base = k; ok.push(w.toUpperCase()); }
+    else bad.push(`"${w}" no es un código`);
+  });
+  pares.forEach(([k,v])=>{
+    const campo = CLAVES[norm(k)];
+    if (!campo) { bad.push(`clave "${k}" desconocida`); return; }
+    const val = validar(campo, v);
+    if (val === null) { bad.push(`${k}: "${v}" no válido`); return; }
+    patch[campo] = val; ok.push(`${k}=${v.replace(/"/g,"")}`);
+  });
+  return {patch, ok, bad, base: (base && pares.length===0 && bad.length===0) ? base : null};
+}
+function genCodigo(){
+  const e=S.estilo, b=x=>x?"si":"no";
+  return `formato=${e.formato} color=${e.pri} fondo=${e.bg} superficie=${e.card} texto=${e.txt} letra=${e.fb} titulos=${e.ft} radio=${e.r} vista=${e.layout} efecto=${e.efecto} anim=${b(e.anim)} fotos=${b(e.fotos)} desc=${b(e.desc)}`;
+}
+let codeT, lastFb = "";
+function aplicarCodigo(str, {silent=false}={}){
+  S.estilo.codigo = str;
+  const {patch, ok, bad, base} = parseCodigo(str);
+  lastFb = ok.map(x=>`<span class="ok">✓ ${esc(x)}</span>`).join("") + bad.map(x=>`<span class="bad">✕ ${esc(x)}</span>`).join("");
+  const fb=$("#codeFb"); if(fb) fb.innerHTML = lastFb;
+  if (Object.keys(patch).length){
+    Object.assign(S.estilo, patch);
+    S.estilo.tema = base;
+    renderMenu({instant:true});
+    const rest=$("#dRest"); if(rest) rest.innerHTML = disenoRestHTML();
+  }
+  save();
+  if(!silent && ok.length && !bad.length) toast("✨ Formato aplicado");
+}
+
+/* =========================================================
+   VISTA CLIENTE
+   ========================================================= */
+let q = "", revealIO, spyIO;
+function badgesHTML(p){
+  let b="";
+  if(!p.stock) b+=`<span class="bd bd-sin">Sin stock</span>`;
+  if(off(p))  b+=`<span class="bd bd-off">-${off(p)}%</span>`;
+  if(p.destacado) b+=`<span class="bd bd-dest">${BADGE_DEST[S.estilo.formato]}</span>`;
+  return b?`<div class="badges">${b}</div>`:"";
+}
+const media = p => p.foto?`<img src="${p.foto}" alt="" loading="lazy" decoding="async">`:`<span class="em">${esc(p.emoji)}</span>`;
+function itemHTML(p,i){
+  const e=S.estilo, bd=badgesHTML(p);
+  return `<article class="item rv${p.stock?"":" agotado"}${p.destacado?" dest":""}" data-id="${p.id}" tabindex="0" role="button"
+    data-q="${esc(norm(p.nombre+" "+p.desc))}" style="animation-delay:${(i%6)*60}ms">
+    ${e.fotos?`<div class="foto">${media(p)}${bd}</div>`:""}
+    <div class="info">${e.fotos?"":bd}
+      <h3>${esc(p.nombre)}</h3>
+      ${e.desc&&p.desc?`<p>${esc(p.desc)}</p>`:""}
+      <div class="pr"><span class="precio">${fmt(p.precio)}</span>${off(p)?`<s class="antes">${fmt(p.precioAntes)}</s>`:""}</div>
+    </div>
+    <span class="go" aria-hidden="true">+</span>
+  </article>`;
+}
+function renderMenu(opts={}){
+  applyStyle();
+  const L=S.local, cats=S.categorias.filter(c=>S.productos.some(p=>p.cat===c.id));
+  const dest=S.productos.filter(p=>p.destacado&&p.stock);
+  const sec=(id,emoji,nombre,list)=>`<section class="cat" id="${id}"><h2 class="cat-h">${esc(emoji)} ${esc(nombre)} <span class="n">${list.length}</span></h2>
+    <div class="items">${list.map(itemHTML).join("")}</div></section>`;
+  $("#app").innerHTML=`
+  <header class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-in">
+      <div class="logo">${L.logo?`<img src="${L.logo}" alt="">`:esc(L.emoji)}</div>
+      <div class="hero-txt">
+        <p class="kicker">Carta</p>
+        <h1>${esc(L.nombre)}</h1>
+        ${L.slogan?`<p class="slogan">${esc(L.slogan)}</p>`:""}
+      </div>
+      <div class="meta">
+        ${L.horario?`<span>🕒 ${esc(L.horario)}</span>`:""}
+        ${L.direccion?`<span>📍 ${esc(L.direccion)}</span>`:""}
+        ${L.whatsapp?`<span>💬 ${esc(L.whatsapp)}</span>`:""}
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    ${S.promo.activa?`<div class="promo"><div class="pe">${esc(S.promo.emoji)}</div><div><span class="tag">PROMO</span><h2>${esc(S.promo.titulo)}</h2><p>${esc(S.promo.texto)}</p></div></div>`:""}
+    <nav class="nav">
+      <label class="search"><span aria-hidden="true">🔎</span><input id="q" type="search" placeholder="Buscar en la carta…" value="${esc(q)}" autocomplete="off"></label>
+      <div class="chips" id="chips">
+        ${dest.length?`<button class="chip" data-go="sec-dest">${LABEL_DEST[S.estilo.formato]}</button>`:""}
+        ${cats.map(c=>`<button class="chip" data-go="sec-${c.id}">${esc(c.emoji)} ${esc(c.nombre)}</button>`).join("")}
+      </div>
+    </nav>
+    ${dest.length?sec("sec-dest","",LABEL_DEST[S.estilo.formato],dest):""}
+    ${cats.map(c=>sec("sec-"+c.id,c.emoji,c.nombre,S.productos.filter(p=>p.cat===c.id))).join("")}
+    <p class="empty" id="empty">No encontramos nada con esa búsqueda 🤔</p>
+  </main>
+  <footer>Precios en pesos argentinos · Carta digital</footer>`;
+
+  // Animación de entrada (solo en carga real; al editar en vivo se muestra al instante)
+  revealIO?.disconnect();
+  if(opts.instant || !animOn()){ $$(".rv").forEach(el=>el.classList.remove("rv")); }
+  else {
+    revealIO=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){en.target.classList.add("in");revealIO.unobserve(en.target)}}),{rootMargin:"0px 0px -6% 0px"});
+    $$(".rv").forEach(el=>revealIO.observe(el));
+  }
+  setupSpy(); applySearch();
+}
+function setupSpy(){
+  spyIO?.disconnect();
+  spyIO=new IntersectionObserver(es=>es.forEach(en=>{
+    if(!en.isIntersecting) return;
+    const chips=$("#chips"), chip=chips?.querySelector(`[data-go="${en.target.id}"]`); if(!chip) return;
+    chips.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===chip));
+    chips.scrollTo({left:chip.offsetLeft-chips.clientWidth/2+chip.offsetWidth/2,behavior:animOn()?"smooth":"auto"});
+  }),{rootMargin:"-38% 0px -58% 0px"});
+  $$("section.cat").forEach(s=>spyIO.observe(s));
+}
+function applySearch(){
+  const t=norm(q.trim()); let any=false;
+  $$("section.cat").forEach(s=>{
+    let vis=0;
+    s.querySelectorAll(".item").forEach(it=>{const show=!t||it.dataset.q.includes(t);it.hidden=!show;if(show)vis++});
+    s.hidden = vis===0 || (t && s.id==="sec-dest"); if(!s.hidden) any=true;
+  });
+  $("#empty").style.display=any?"none":"block";
+}
+$("#app").addEventListener("input",e=>{ if(e.target.id==="q"){ q=e.target.value; applySearch(); } });
+$("#app").addEventListener("click",e=>{
+  const go=e.target.closest("[data-go]");
+  if(go){document.getElementById(go.dataset.go)?.scrollIntoView({behavior:animOn()?"smooth":"auto"});return}
+  const it=e.target.closest(".item"); if(it) openDet(it);
+});
+$("#app").addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("item")){e.preventDefault();openDet(e.target)} });
+
+/* ---------- Detalle con transición desde la tarjeta (FLIP) ---------- */
+const ov=$("#detOv"), det=$("#det"); let fromEl=null;
+function openDet(el){
+  const p=S.productos.find(x=>x.id===el.dataset.id); if(!p) return;
+  fromEl=el;
+  det.innerHTML=`<span class="handle"></span>
+    <div class="foto">${media(p)}${badgesHTML(p)}</div>
+    <div class="body"><h2>${esc(p.nombre)}</h2>${p.desc?`<p class="d">${esc(p.desc)}</p>`:""}
+      <div class="pr"><span class="precio">${fmt(p.precio)}</span>${off(p)?`<s class="antes">${fmt(p.precioAntes)}</s>`:""}</div>
+      ${off(p)?`<span class="ahorro">Ahorrás ${fmt(p.precioAntes-p.precio)}</span>`:""}
+      ${!p.stock?`<p class="nostock">Momentáneamente sin stock</p>`:""}
+      <button class="cerrar">Cerrar</button></div>`;
+  det.scrollTop=0; ov.classList.add("open"); document.body.style.overflow="hidden";
+  requestAnimationFrame(()=>ov.classList.add("show"));
+  if(animOn()){
+    const a=el.getBoundingClientRect(), b=det.getBoundingClientRect(), s=a.width/b.width;
+    const dx=(a.left+a.width/2)-(b.left+b.width/2), dy=(a.top+a.height/2)-(b.top+b.height/2);
+    det.animate([{transform:`translate(${dx}px,${dy}px) scale(${s})`,opacity:.35,borderRadius:"16px"},{transform:"none",opacity:1}],
+      {duration:430,easing:"cubic-bezier(.2,.9,.25,1)"});
+  }
+}
+function closeDet(){
+  if(!ov.classList.contains("open")) return;
+  ov.classList.remove("show");
+  const done=()=>{ov.classList.remove("open");det.style.transform="";document.body.style.overflow="";fromEl?.focus({preventScroll:true})};
+  if(animOn()) det.animate([{transform:det.style.transform||"none",opacity:1},{transform:"translateY(60%)",opacity:0}],{duration:230,easing:"ease-in"}).finished.then(done);
+  else done();
+}
+ov.addEventListener("click",e=>{if(e.target===ov||e.target.classList.contains("cerrar"))closeDet()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDet()});
+// Deslizar hacia abajo para cerrar
+let ty=null;
+det.addEventListener("touchstart",e=>{ty=det.scrollTop<=0?e.touches[0].clientY:null},{passive:true});
+det.addEventListener("touchmove",e=>{if(ty===null)return;const d=e.touches[0].clientY-ty;if(d>0)det.style.transform=`translateY(${d}px)`},{passive:true});
+det.addEventListener("touchend",e=>{if(ty===null)return;const d=e.changedTouches[0].clientY-ty;ty=null;
+  if(d>110)closeDet();else{det.style.transform="";if(animOn())det.animate([{transform:`translateY(${d}px)`},{transform:"none"}],{duration:200,easing:"ease-out"})}});
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+$("#fab").onclick=()=>{$("#pin").value="";$("#pinErr").textContent="";$("#loginOv").classList.add("open");setTimeout(()=>$("#pin").focus(),50)};
+$("#loginCancel").onclick=()=>$("#loginOv").classList.remove("open");
+function tryLogin(){ if($("#pin").value==="1234"){$("#loginOv").classList.remove("open");openPanel()} else $("#pinErr").textContent="PIN incorrecto"; }
+$("#loginOk").onclick=tryLogin;
+$("#pin").addEventListener("keydown",e=>{if(e.key==="Enter")tryLogin()});
+
+/* =========================================================
+   PANEL DEL DUEÑO
+   ========================================================= */
+let tab="diseno", openProd=null, armed=null;
+function openPanel(){$("#drawer").classList.add("open");$("#fab").style.display="none";renderPanel()}
+$("#verCliente").onclick=()=>{$("#drawer").classList.remove("open");$("#fab").style.display="";toast("✅ Cambios guardados")};
+$("#tabs").onclick=e=>{const b=e.target.closest("[data-tab]");if(!b)return;tab=b.dataset.tab;
+  $$("#tabs button").forEach(x=>x.classList.toggle("on",x===b));renderPanel();$("#panel").scrollTop=0};
+
+const txt=(label,path,type="text")=>`<div class="field"><label>${label}</label><input type="${type}" data-path="${path}" value="${esc(getPath(path))}"></div>`;
+const tog=(label,path)=>`<div class="tog">${label}<label class="sw2"><input type="checkbox" data-path="${path}" ${getPath(path)?"checked":""}><span></span></label></div>`;
+const seg=(attr,map,cur)=>`<div class="seg">${Object.entries(map).map(([k,l])=>`<button data-${attr}="${k}" class="${cur===k?"on":""}">${l}</button>`).join("")}</div>`;
+const fontSel=(path,cur)=>`<select data-path="${path}">${Object.keys(FUENTES).map(f=>`<option ${cur===f?"selected":""}>${f}</option>`).join("")}</select>`;
+
+function codeCardHTML(){
+  return `<div class="card code-card"><h4>🔑 Código de formato</h4>
+    <textarea data-code rows="2" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Ej:  NOCHE    ·    NEON radio=24 vista=lista">${esc(S.estilo.codigo||"")}</textarea>
+    <div class="fb" id="codeFb">${lastFb}</div>
+    <button class="btn sec full mini" data-export>📤 Generar el código de mi diseño y copiarlo</button>
+    <details class="help"><summary>¿Cómo se escribe un código?</summary>
+      <p>Escribí un <b>código base</b> y, si querés, ajustes con <code>clave=valor</code> separados por espacios. Se aplica mientras escribís.</p>
+      <p><b>Códigos base:</b> ${Object.keys(CODIGOS).map(k=>`<code>${k.toUpperCase()}</code>`).join(" ")}</p>
+      <table>
+        <tr><td>formato</td><td>${Object.keys(FORMATOS).join(", ")}</td></tr>
+        <tr><td>color · fondo · superficie · texto</td><td>color hex, ej. <code>#ff2d55</code></td></tr>
+        <tr><td>letra · titulos</td><td>${Object.keys(FUENTES).join(", ")}</td></tr>
+        <tr><td>radio</td><td>0 a 32 (bordes redondeados)</td></tr>
+        <tr><td>vista</td><td>grilla, lista, grande</td></tr>
+        <tr><td>efecto</td><td>${Object.keys(EFECTOS).join(", ")}</td></tr>
+        <tr><td>anim · fotos · desc</td><td>si / no</td></tr>
+      </table>
+      <p>Ejemplos:<br><code>ORO</code><br><code>NEON vista=lista radio=28</code><br><code>formato=lujo color=#c9a227 titulos=Playfair</code></p>
+    </details></div>`;
+}
+function disenoRestHTML(){
+  const e=S.estilo;
+  return `<div class="card"><h4>Plantillas</h4><div class="temas">${Object.entries(CODIGOS).map(([k,t])=>`
+      <button class="tema ${e.tema===k?"on":""}" data-tema="${k}"><span class="sw"><i style="background:${t.pri}"></i><i style="background:${t.bg}"></i><i style="background:${t.txt}"></i></span><b>${t.nombre}</b><code>${k.toUpperCase()}</code></button>`).join("")}</div>
+      <div class="hint">Cada plantilla es un código. Tocala para aplicarla y después ajustala.</div></div>
+    <div class="card"><h4>Personalidad</h4>${seg("formato",FORMATOS,e.formato)}
+      <div class="hint">Cambia la estructura: encabezado, categorías, distintivos y forma de las tarjetas.</div></div>
+    <div class="card"><h4>Efecto de las tarjetas</h4>${seg("efecto",EFECTOS,e.efecto)}</div>
+    <div class="card"><h4>Colores</h4><div class="colors">
+      <label><input type="color" data-path="estilo.pri" value="${e.pri}">Principal</label>
+      <label><input type="color" data-path="estilo.bg" value="${e.bg}">Fondo</label>
+      <label><input type="color" data-path="estilo.card" value="${e.card}">Tarjetas</label>
+      <label><input type="color" data-path="estilo.txt" value="${e.txt}">Texto</label></div></div>
+    <div class="card"><h4>Tipografía y forma</h4>
+      <div class="row"><div class="field"><label>Títulos</label>${fontSel("estilo.ft",e.ft)}</div><div class="field"><label>Texto</label>${fontSel("estilo.fb",e.fb)}</div></div>
+      <div class="field"><label>Bordes redondeados: <span id="rv">${e.r}px</span></label><input type="range" min="0" max="32" data-path="estilo.r" value="${e.r}"></div></div>
+    <div class="card"><h4>Distribución</h4>${seg("layout",LAYOUTS,e.layout)}
+      <div style="margin-top:10px">${tog("Mostrar fotos","estilo.fotos")}${tog("Mostrar descripciones","estilo.desc")}${tog("Animaciones","estilo.anim")}</div></div>
+    <button class="btn dan full" data-reset>${armed==="reset"?"¿Seguro? Tocá de nuevo para borrar todo":"↺ Restablecer demo"}</button>`;
+}
+function renderPanel(){
+  let h="";
+  if(tab==="diseno") h = codeCardHTML() + `<div id="dRest">${disenoRestHTML()}</div>`;
+  if(tab==="local"){
+    const L=S.local;
+    h+=`<div class="card"><h4>Logo</h4><div class="upl"><div class="th">${L.logo?`<img src="${L.logo}">`:esc(L.emoji)}</div>
+      <label class="btn sec mini">📷 Subir logo<input type="file" accept="image/*" data-upload="logo"></label>
+      ${L.logo?`<button class="btn dan mini" data-quitar="logo">Quitar</button>`:""}</div>
+      ${!L.logo?`<div class="field" style="margin-top:10px"><label>O usá un emoji</label><input type="text" data-path="local.emoji" value="${esc(L.emoji)}" maxlength="4"></div>`:""}</div>
+      <div class="card"><h4>Datos del local</h4>${txt("Nombre","local.nombre")}${txt("Frase / slogan","local.slogan")}
+      ${txt("Horario","local.horario")}${txt("Dirección","local.direccion")}${txt("WhatsApp","local.whatsapp","tel")}</div>`;
+  }
+  if(tab==="promo"){
+    h+=`<div class="card"><h4>Promo destacada</h4>${tog("Mostrar promo en la carta","promo.activa")}
+      <div class="row" style="margin-top:8px"><div style="flex:0 0 70px">${txt("Emoji","promo.emoji")}</div><div>${txt("Título","promo.titulo")}</div></div>
+      <div class="field"><label>Detalle</label><textarea data-path="promo.texto">${esc(S.promo.texto)}</textarea></div>
+      <div class="hint">Ideal para el 2x1, happy hour o el combo del día.</div></div>`;
+  }
+  if(tab==="productos"){
+    h+=`<div class="hint" style="margin:-4px 0 12px">Tocá un producto para editarlo. Para mostrarlo en oferta, cargá un "precio anterior" mayor al actual.</div>`;
+    S.categorias.forEach(c=>{
+      h+=`<div class="card"><div class="cathead"><input class="em" data-cat="${c.id}" data-cf="emoji" value="${esc(c.emoji)}"><input data-cat="${c.id}" data-cf="nombre" value="${esc(c.nombre)}">
+        <button class="btn dan mini" data-delcat="${c.id}">${armed==="cat"+c.id?"¿Seguro?":"🗑"}</button></div>`;
+      S.productos.filter(p=>p.cat===c.id).forEach(p=>{
+        h+=`<details class="prod" data-pid="${p.id}" ${openProd===p.id?"open":""}><summary><span class="e">${esc(p.emoji)}</span><span class="n">${esc(p.nombre)}</span>
+          ${!p.stock?'<span class="tagx">SIN STOCK</span>':""}${off(p)?`<span class="tagx of">-${off(p)}%</span>`:""}${p.destacado?"⭐":""}<span class="p">${fmt(p.precio)}</span></summary><div class="pb">
+          <div class="field"><label>Nombre</label><input type="text" data-pid="${p.id}" data-f="nombre" value="${esc(p.nombre)}"></div>
+          <div class="field"><label>Descripción</label><textarea data-pid="${p.id}" data-f="desc">${esc(p.desc)}</textarea></div>
+          <div class="row"><div class="field"><label>Precio ($)</label><input type="number" inputmode="numeric" data-pid="${p.id}" data-f="precio" value="${p.precio}"></div>
+          <div class="field"><label>Precio anterior</label><input type="number" inputmode="numeric" data-pid="${p.id}" data-f="precioAntes" value="${p.precioAntes||""}" placeholder="Oferta"></div></div>
+          <div class="field"><label>Categoría</label><select data-pid="${p.id}" data-f="cat">${S.categorias.map(k=>`<option value="${k.id}" ${k.id===p.cat?"selected":""}>${esc(k.nombre)}</option>`).join("")}</select></div>
+          <div class="field"><label>Foto</label><div class="upl"><div class="th">${p.foto?`<img src="${p.foto}">`:esc(p.emoji)}</div>
+            <label class="btn sec mini">📷 Subir<input type="file" accept="image/*" data-upload="${p.id}"></label>
+            ${p.foto?`<button class="btn dan mini" data-quitar="${p.id}">Quitar</button>`:`<input type="text" data-pid="${p.id}" data-f="emoji" value="${esc(p.emoji)}" maxlength="4" style="width:56px;text-align:center;font-size:18px;padding:6px;border:1.5px solid #ddd;border-radius:9px">`}</div></div>
+          <div class="tog">Disponible<label class="sw2"><input type="checkbox" data-pid="${p.id}" data-f="stock" ${p.stock?"checked":""}><span></span></label></div>
+          <div class="tog">⭐ Recomendado<label class="sw2"><input type="checkbox" data-pid="${p.id}" data-f="destacado" ${p.destacado?"checked":""}><span></span></label></div>
+          <button class="btn dan full mini" style="margin-top:8px" data-delprod="${p.id}">${armed==="p"+p.id?"¿Seguro? Tocá de nuevo":"🗑 Eliminar producto"}</button>
+          </div></details>`;
+      });
+      h+=`<button class="btn sec full mini" data-addprod="${c.id}">+ Agregar producto</button></div>`;
+    });
+    h+=`<button class="btn full" data-addcat>+ Nueva categoría</button>`;
+  }
+  $("#panel").innerHTML=h;
+}
+
+/* ---------- Eventos del panel ---------- */
+const PN=$("#panel");
+const ESTRUCTURA = ["formato","pri","bg","card","txt","fb","ft","r","efecto","layout"];
+PN.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.hasAttribute("data-code")){
+    clearTimeout(codeT); codeT=setTimeout(()=>aplicarCodigo(t.value),280); return;
+  }
+  if(t.dataset.path){
+    const v=t.type==="checkbox"?t.checked:t.type==="range"?+t.value:t.value;
+    setPath(t.dataset.path,v);
+    if(t.dataset.path==="estilo.r") $("#rv").textContent=v+"px";
+    if(ESTRUCTURA.includes(t.dataset.path.split(".")[1])){ S.estilo.tema=null; $$(".tema").forEach(x=>x.classList.remove("on")); }
+  } else if(t.dataset.pid&&t.dataset.f){
+    const p=S.productos.find(x=>x.id===t.dataset.pid), f=t.dataset.f;
+    p[f]=t.type==="checkbox"?t.checked:(f==="precio"||f==="precioAntes")?(+t.value||0):t.value;
+    const sm=t.closest("details")?.querySelector("summary");
+    if(sm&&["nombre","precio","emoji"].includes(f)){sm.querySelector(".n").textContent=p.nombre;sm.querySelector(".p").textContent=fmt(p.precio);sm.querySelector(".e").textContent=p.emoji}
+    if(["cat","stock","destacado"].includes(f)) renderPanel();
+  } else if(t.dataset.cat){
+    S.categorias.find(c=>c.id===t.dataset.cat)[t.dataset.cf]=t.value;
+  } else return;
+  renderMenu({instant:true}); save();
+});
+PN.addEventListener("change",async e=>{
+  const t=e.target;
+  if(t.dataset.pid&&t.dataset.f==="precioAntes") renderPanel();
+  if(!t.dataset.upload||!t.files[0]) return;
+  try{
+    const url=await resizeImg(t.files[0], t.dataset.upload==="logo"?300:640);
+    if(t.dataset.upload==="logo") S.local.logo=url; else S.productos.find(p=>p.id===t.dataset.upload).foto=url;
+    renderPanel();renderMenu({instant:true});save();toast("📷 Foto actualizada");
+  }catch(err){toast("No se pudo leer la imagen")}
+});
+PN.addEventListener("toggle",e=>{if(e.target.matches("details.prod")&&e.target.open)openProd=e.target.dataset.pid},true);
+PN.addEventListener("click",async e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  const d=b.dataset, prev=armed; armed=null;
+  if(d.export!==undefined){
+    const code=genCodigo(); const ta=PN.querySelector("[data-code]"); ta.value=code; aplicarCodigo(code,{silent:true});
+    try{ await navigator.clipboard.writeText(code); toast("📋 Código copiado"); }catch(err){ ta.focus(); ta.select(); toast("Código generado: copialo del recuadro"); }
+    return;
+  }
+  if(d.tema){
+    const code=d.tema.toUpperCase(); const ta=PN.querySelector("[data-code]"); if(ta) ta.value=code;
+    aplicarCodigo(code,{silent:true}); toast("🎨 "+CODIGOS[d.tema].nombre); return;
+  }
+  if(d.formato){S.estilo.formato=d.formato;S.estilo.tema=null}
+  else if(d.efecto){S.estilo.efecto=d.efecto;S.estilo.tema=null}
+  else if(d.layout){S.estilo.layout=d.layout}
+  else if(d.quitar){if(d.quitar==="logo")S.local.logo=null;else S.productos.find(p=>p.id===d.quitar).foto=null}
+  else if(d.addprod){const p=P(d.addprod,"Nuevo producto","",0,"🍽️");S.productos.push(p);openProd=p.id;toast("Producto agregado")}
+  else if(d.addcat!==undefined){S.categorias.push({id:"c"+(uid++),nombre:"Nueva categoría",emoji:"📋"});toast("Categoría creada")}
+  else if(d.delprod){if(prev==="p"+d.delprod){S.productos=S.productos.filter(p=>p.id!==d.delprod);toast("Producto eliminado")}else armed="p"+d.delprod}
+  else if(d.delcat){if(prev==="cat"+d.delcat){S.categorias=S.categorias.filter(c=>c.id!==d.delcat);S.productos=S.productos.filter(p=>p.cat!==d.delcat);toast("Categoría eliminada")}else armed="cat"+d.delcat}
+  else if(d.reset!==undefined){if(prev==="reset"){S=clone(DEF);lastFb="";toast("Demo restablecida")}else armed="reset"}
+  else return;
+  renderPanel();renderMenu({instant:true});save();
+});
+
+/* =========================================================
+   ARRANQUE
+   ========================================================= */
+uid = Math.max(uid, ...S.productos.map(p=>+p.id.slice(1)||0), ...S.categorias.map(c=>+c.id.slice(1)||0)) + 1;
+renderMenu();
+</script>
+</body>
+</html>
