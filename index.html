@@ -296,7 +296,10 @@ body.noanim .rv{opacity:1}
 .dh h3{flex:1;font-size:16px}
 .dh button{background:#333;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600}
 .tabs{display:flex;background:#fff;border-bottom:1px solid #e3e3e6}
-.tabs button{flex:1;border:none;background:none;padding:12px 2px;font-size:12.5px;font-weight:600;color:#777;border-bottom:3px solid transparent}
+.tabs button{flex:1;min-width:0;border:none;background:none;padding:8px 2px;font-size:11.5px;font-weight:600;color:#777;border-bottom:3px solid transparent;
+  display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.15}
+.tabs .ti{font-size:17px;line-height:1}          /* ícono arriba */
+.tabs .tt{white-space:nowrap}                     /* texto abajo: entran 5 tabs en 320px */
 .tabs button.on{color:#111;border-color:#111}
 .dbody{flex:1;overflow-y:auto;padding:16px;overscroll-behavior:contain}
 .card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid #ececf0}
@@ -304,7 +307,7 @@ body.noanim .rv{opacity:1}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
 .field:last-child{margin-bottom:0}
 .field label{font-size:13px;font-weight:600;color:#444}
-.field input[type=text],.field input[type=number],.field input[type=tel],.field textarea,.field select{font:inherit;font-size:15px;padding:9px 11px;border:1.5px solid #ddd;border-radius:9px;background:#fff;width:100%;color:#111}
+.field input[type=text],.field input[type=number],.field input[type=tel],.field input[type=url],.field textarea,.field select{font:inherit;font-size:15px;padding:9px 11px;border:1.5px solid #ddd;border-radius:9px;background:#fff;width:100%;color:#111}
 .field textarea{resize:vertical;min-height:60px}
 .row{display:flex;gap:10px}
 .row>*{flex:1;min-width:0}
@@ -362,6 +365,36 @@ body.noanim .rv{opacity:1}
 .hint{font-size:12px;color:#888;margin-top:4px;line-height:1.4}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#111;font-weight:600;font-size:13px;padding:10px 16px;border-radius:999px;opacity:0;transition:.25s;z-index:80;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%)}
+
+/* ---------- Generador de QR (panel del dueño) ---------- */
+.aviso{background:#fff4e0;border:1px solid #f5c26b;color:#8a5a00;border-radius:9px;padding:9px 11px;font-size:13px;line-height:1.4;margin:8px 0 10px}
+.aviso b{display:block;margin-bottom:2px}
+.qrprev{display:flex;justify-content:center;margin-top:12px}
+.qrprev canvas{width:220px;max-width:100%;height:auto;border-radius:3px;box-shadow:0 6px 22px rgba(0,0,0,.16),0 1px 3px rgba(0,0,0,.08)}
+.qrvacio{width:100%;border:2px dashed #ccc;border-radius:10px;padding:22px 14px;text-align:center;color:#666;font-size:13px;line-height:1.45}
+.qrvacio .btn{margin-top:10px}
+.qrbtns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.qrbtns .btn{flex:1 1 130px}
+[data-qr][aria-disabled=true]{opacity:.4;cursor:not-allowed}
+
+/* ---------- Hoja A4 para imprimir QR (se crea al vuelo) ---------- */
+#printArea{display:none}
+.hoja{position:relative;width:210mm;height:296.5mm;overflow:hidden;background:#fff}
+.hoja img{position:absolute;display:block;max-width:none}
+.hoja .cab{position:absolute;left:0;right:0;text-align:center;font:7pt/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#888;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8mm}   /* un nombre largo no baja sobre las tarjetas */
+.hoja .corte{position:absolute;width:0;height:0;border:0 dashed #999}
+.hoja .cv{border-left-width:.2mm}
+.hoja .ch{border-top-width:.2mm}
+/* Impresión de la hoja de QR: solo mientras body tiene la clase "imprimiendo-qr" (la pone qrImprimir).
+   Sin la clase, #printArea queda oculto y la carta se imprime normal.
+   El @page A4 sin márgenes va en un <style> dentro de #printArea, así solo existe durante esa impresión. */
+@media print{
+  body.imprimiendo-qr{background:#fff!important;padding:0!important;margin:0!important;min-height:0!important}
+  body.imprimiendo-qr::before{display:none!important}
+  body.imprimiendo-qr>*:not(#printArea){display:none!important}
+  body.imprimiendo-qr>#printArea{display:block!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 </head>
 <body>
@@ -386,10 +419,11 @@ body.noanim .rv{opacity:1}
 <aside class="drawer adm" id="drawer">
   <div class="dh"><h3>⚙️ Editar carta</h3><button id="verCliente">👁 Ver como cliente</button></div>
   <div class="tabs" id="tabs">
-    <button data-tab="diseno" class="on">🎨 Diseño</button>
-    <button data-tab="local">🏠 Local</button>
-    <button data-tab="promo">🔥 Promo</button>
-    <button data-tab="productos">🍔 Productos</button>
+    <button data-tab="diseno" class="on"><span class="ti">🎨</span><span class="tt">Diseño</span></button>
+    <button data-tab="local"><span class="ti">🏠</span><span class="tt">Local</span></button>
+    <button data-tab="promo"><span class="ti">🔥</span><span class="tt">Promo</span></button>
+    <button data-tab="productos"><span class="ti">🍔</span><span class="tt">Menú</span></button>
+    <button data-tab="qr"><span class="ti">📱</span><span class="tt">QR</span></button>
   </div>
   <div class="dbody" id="panel"></div>
 </aside>
@@ -442,7 +476,8 @@ let uid = 100;
 const P = (cat,nombre,desc,precio,emoji,extra={}) => ({id:"p"+(uid++),cat,nombre,desc,precio,precioAntes:0,emoji,foto:null,stock:true,destacado:false,...extra});
 const DEF = {
   local:{nombre:"La Brasa Burger", slogan:"Hamburguesas a la parrilla, como en casa", emoji:"🍔", logo:null,
-         horario:"Mar a Dom · 19 a 00 h", direccion:"Av. Pellegrini 1234", whatsapp:"341 555-1234"},
+         horario:"Mar a Dom · 19 a 00 h", direccion:"Av. Pellegrini 1234", whatsapp:"341 555-1234",
+         url:"https://carta.irodev.com.ar", qrTam:"grande"},   // link al que apunta el QR + tamaño de tarjeta elegido
   estilo:{tema:"clasico", codigo:"CLASICO", ...fromCodigo("clasico"), fotos:true, desc:true, anim:true},
   promo:{activa:true, emoji:"🔥", titulo:"Martes 2x1 en Clásicas", texto:"Todos los martes, llevás 2 hamburguesas clásicas al precio de 1."},
   categorias:[
@@ -468,6 +503,7 @@ const DEF = {
   ]
 };
 const clone = o => JSON.parse(JSON.stringify(o));
+const DOMINIO = "irodev.com.ar";   // los QR impresos siempre tienen que apuntar a este dominio
 
 /* =========================================================
    ESTADO (localStorage) + migración desde la versión anterior
@@ -475,7 +511,9 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const KEY = "cartaDemo_v2", OLD_KEY = "cartaDemo_v1";
 function migrate(s){
   const d = clone(DEF), e = s.estilo || {};
+  const teniaUrl = !!s.local && "url" in s.local;
   s.local = {...d.local, ...s.local};
+  if (!teniaUrl) s.local.url = "";   // un estado viejo no hereda el link de la demo como "listo para imprimir"
   s.promo = {...d.promo, ...s.promo};
   const viejo = {rustico:"clasico", oscuro:"noche", colorido:"delivery", minimal:"lujo"};
   s.estilo = {...d.estilo, ...e};
@@ -764,9 +802,9 @@ $("#pin").addEventListener("keydown",e=>{if(e.key==="Enter")tryLogin()});
    PANEL DEL DUEÑO
    ========================================================= */
 let tab="diseno", openProd=null, armed=null;
-function openPanel(){$("#drawer").classList.add("open");$("#fab").style.display="none";renderPanel()}
+function openPanel(){$("#drawer").classList.add("open");$("#fab").style.display="none";qrAlAbrirPestana();renderPanel()}
 $("#verCliente").onclick=()=>{$("#drawer").classList.remove("open");$("#fab").style.display="";toast("✅ Cambios guardados")};
-$("#tabs").onclick=e=>{const b=e.target.closest("[data-tab]");if(!b)return;tab=b.dataset.tab;
+$("#tabs").onclick=e=>{const b=e.target.closest("[data-tab]");if(!b)return;tab=b.dataset.tab;qrAlAbrirPestana();
   $$("#tabs button").forEach(x=>x.classList.toggle("on",x===b));renderPanel();$("#panel").scrollTop=0};
 
 const txt=(label,path,type="text")=>`<div class="field"><label>${label}</label><input type="${type}" data-path="${path}" value="${esc(getPath(path))}"></div>`;
@@ -857,7 +895,339 @@ function renderPanel(){
     });
     h+=`<button class="btn full" data-addcat>+ Nueva categoría</button>`;
   }
+  if(tab==="qr"){
+    h+=`<div class="card"><h4>Link de tu carta</h4>
+      <div class="field"><label for="qrUrl">Link de la carta</label>
+        <input id="qrUrl" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off"
+          placeholder="https://carta.irodev.com.ar" data-path="local.url" value="${esc(S.local.url)}">
+        <div class="hint">Es el link al que lleva el QR. Si lo cambiás después de imprimir, los QR viejos dejan de servir.</div></div>
+      <div id="qrEstado"></div>
+      <button class="btn sec mini" data-qr="abrir" aria-disabled="true">Abrir link</button></div>
+    <div class="card"><h4>Vista previa</h4>
+      ${seg("qrtam",{grande:"Mesa (4 por hoja)",chico:"Chico (9 por hoja)"},S.local.qrTam==="chico"?"chico":"grande")}
+      <div class="qrprev" id="qrPrev"></div></div>
+    <div class="card"><h4>Descargar e imprimir</h4>
+      <div class="qrbtns"><button class="btn sec" data-qr="png" aria-disabled="true">Descargar PNG</button><button class="btn sec" data-qr="svg" aria-disabled="true">Descargar SVG</button></div>
+      <button class="btn full" data-qr="print" aria-disabled="true">Imprimir hoja A4</button>
+      <div class="hint">PNG: para mandar por WhatsApp o a la imprenta. SVG: para un diseñador, se agranda sin perder calidad.</div>
+      <div class="hint">Al imprimir elegí papel A4 y escala 100% (no “Ajustar a la página”). En el celu podés guardarlo como PDF.</div></div>`;
+  }
   $("#panel").innerHTML=h;
+  if(tab==="qr") qrActualizar();   // carga la librería (solo acá) y arma la vista previa
+}
+/* Red de seguridad: si una impresión quedó a medias (no llegó afterprint), se limpia al volver a la pestaña QR */
+function qrAlAbrirPestana(){
+  if(tab==="qr"&&(qrImprimiendo||document.body.classList.contains("imprimiendo-qr")||$("#printArea"))) qrLimpiarImpresion();
+}
+
+/* =========================================================
+   GENERADOR DE QR (solo panel del dueño)
+   - La librería se carga recién al abrir la pestaña QR.
+   - Un único "modelo" (lista de figuras en mm) alimenta el PNG, el SVG y la impresión.
+   ========================================================= */
+const QR_LIB = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js";
+const QR_DPI = 300;
+const PT = 25.4/72;   // 1 punto tipográfico en mm
+/* Medidas de cada tarjeta en mm (QR = cuadrado con la zona de silencio incluida) */
+const QR_TAMS = {
+  grande:{w:100,h:140,cols:2,rows:2,franja:6,logoY:19,logoR:9,nomY:31,nomH:18,nomAncho:84,nomMax:24,nomMin:16,
+          llamY:56.5,llamPt:13,qrX:20,qrY:61,qrS:60,esqT:1.5,esqL:8,esqGap:1.5,
+          ayudaY:128.5,ayudaPt:9,linkY:134,linkPt:8,bandaY:131,bandaPt:11},
+  chico: {w:65,h:90,cols:3,rows:3,franja:4,logoY:11,logoR:6,nomY:18.5,nomH:9.3,nomAncho:55,nomMax:14,nomMin:11,
+          llamY:31.6,llamPt:8,qrX:8.5,qrY:34.5,qrS:48,esqT:1,esqL:5.5,esqGap:1,
+          ayudaY:null,ayudaPt:0,linkY:87.8,linkPt:6.5,bandaY:85.2,bandaPt:7}
+};
+
+/* Valida el link del QR. ok = se puede generar; provisorio = se genera pero no hay que imprimirlo */
+function validarUrl(str){
+  let s=String(str??"").trim(), agregado=false;
+  const base={ok:false,provisorio:false,url:"",corto:"",agregado:false};
+  if(!s) return {...base,msg:"Escribí el link de tu carta para generar el QR."};
+  const MAL=`Ese link no es válido. Tiene que ser algo como https://carta.${DOMINIO}`;
+  // ¿Tiene esquema (https:, javascript:, ...)? "algo.com:8080" no cuenta como esquema
+  const tieneEsquema=/^[a-z][a-z0-9+.-]*:/i.test(s) && !/^[^:\/]+:\d/.test(s);
+  if(!tieneEsquema){ s="https://"+s.replace(/^\/+/,""); agregado=true; }
+  let u; try{ u=new URL(s); }catch(e){ return {...base,msg:MAL}; }
+  if(!["http:","https:"].includes(u.protocol) || !u.hostname.includes(".") || u.username || u.password) return {...base,msg:MAL};
+  const h=u.hostname, avisos=[];
+  if(u.protocol==="http:") avisos.push("El link empieza con http://. Usá https:// para que el celular no muestre advertencias.");
+  if(h.endsWith(".pages.dev")) avisos.push("Es un link de vista previa (.pages.dev) y puede cambiar o dejar de andar.");
+  else if(!(h===DOMINIO || h.endsWith("."+DOMINIO))) avisos.push(`El link no es de ${DOMINIO}. Los QR impresos tienen que apuntar a tu dominio.`);
+  if(u.port) avisos.push(`El link tiene un puerto (:${u.port}). Los QR impresos tienen que usar el link sin puerto.`);
+  return {ok:true,provisorio:avisos.length>0,url:u.href,corto:linkLegible(u,s),agregado,msg:avisos.length?avisos.join(" "):"Link listo para imprimir"};
+}
+/* Link para mostrar en la tarjeta (sin https://), legible: ruta con acentos en vez de %C3%BA y,
+   si el dominio tiene ñ/acentos (IDN), tal como lo escribió el dueño en vez de "xn--…".
+   Solo se muestra: el QR usa siempre u.href. Se escapa con esc() donde se mete en SVG/HTML. */
+function linkLegible(u,tipeado){
+  const raro=/[\u0000-\u001f\u007f-\u009f‎‏‪-‮⁦-⁩]/;   // controles y marcas de dirección
+  let host=u.hostname;
+  if(host.split(".").some(p=>p.startsWith("xn--"))){
+    const m=/^[a-z][a-z0-9+.-]*:\/\/([^\/?#\\]*)/i.exec(tipeado), t=m?m[1].replace(/:\d*$/,"").toLowerCase():"";
+    try{ if(t&&!raro.test(t)&&new URL("https://"+t).hostname===host) host=t; }catch(e){}   // si no coincide, queda punycode
+  }
+  const crudo=(u.pathname==="/"?"":u.pathname)+u.search+u.hash;
+  let resto=crudo;
+  try{ resto=decodeURI(crudo); if(raro.test(resto)) resto=crudo; }catch(e){ resto=crudo; }
+  return host+(u.port?":"+u.port:"")+resto;
+}
+
+/* Carga de la librería: una sola promesa; si falla se descarta para poder reintentar */
+let qrLibP=null;
+function cargarQrLib(){
+  if(window.qrcode) return Promise.resolve();
+  if(qrLibP) return qrLibP;
+  qrLibP=new Promise((res,rej)=>{
+    const sc=document.createElement("script"); sc.src=QR_LIB; sc.async=true; sc.referrerPolicy="no-referrer";
+    const fallo=()=>{ clearTimeout(to); sc.remove(); rej(new Error("No cargó qrcode")); };
+    const to=setTimeout(fallo,15000);
+    sc.onload=()=>{ clearTimeout(to); window.qrcode?res():fallo(); };
+    sc.onerror=fallo;
+    document.head.appendChild(sc);
+  }).catch(err=>{ qrLibP=null; throw err; });
+  return qrLibP;
+}
+
+/* Medición de texto (en mm) con un canvas auxiliar */
+let qrMed=null;
+function medir(s,peso,mm,font){
+  qrMed=qrMed||document.createElement("canvas").getContext("2d");
+  qrMed.font=`${peso} ${mm*10}px ${font}`;
+  return qrMed.measureText(s).width/10;
+}
+/* Parte el texto en líneas y achica la letra hasta que entre; si ni al mínimo entra, corta con "…" */
+function ajustarTexto(s,{font,peso,maxPt,minPt,ancho,lineas=1,alto=0}){
+  const palabras=String(s??"").trim().split(/\s+/).filter(Boolean);
+  if(!palabras.length) return {mm:maxPt*PT,lines:[]};
+  const partir=mm=>{ const out=[]; let cur="";
+    for(const w of palabras){ const t=cur?cur+" "+w:w; if(!cur||medir(t,peso,mm,font)<=ancho) cur=t; else { out.push(cur); cur=w; } }
+    if(cur) out.push(cur); return out; };
+  for(let pt=maxPt; pt>=minPt-0.001; pt-=0.5){
+    const mm=pt*PT, ls=partir(mm);
+    if(ls.length<=lineas && ls.every(l=>medir(l,peso,mm,font)<=ancho) && (!alto||ls.length*mm*1.12<=alto)) return {mm,lines:ls};
+  }
+  const mm=minPt*PT, todas=partir(mm), ls=todas.slice(0,lineas);
+  const recortar=(l,forzar)=>{ let ch=[...l]; if(!forzar&&medir(l,peso,mm,font)<=ancho) return l;
+    while(ch.length>1&&medir(ch.join("")+"…",peso,mm,font)>ancho) ch.pop(); return ch.join("").trimEnd()+"…"; };
+  return {mm,lines:ls.map((l,i)=>recortar(l, i===ls.length-1 && todas.length>ls.length))};
+}
+/* Color principal mezclado con blanco (para el círculo del emoji) */
+function mezclaBlanco(hex,a){
+  const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||"")); if(!m) return "#eeeeee";
+  const n=parseInt(m[1],16), c=[n>>16,(n>>8)&255,n&255].map(v=>Math.round(255+(v-255)*a));
+  return "#"+c.map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+const colorOk = c => /^#[0-9a-f]{3,8}$/i.test(String(c)) ? c : "#111111";
+const LOGO_OK = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/;   // solo logos subidos (data URL); si no, va el emoji
+const cargarImg = src => new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; });
+
+/* Arma el modelo de la tarjeta: tamaño en mm + lista de figuras */
+function qrModelo(v,tam,matriz,logo){
+  const T=QR_TAMS[tam], L=S.local, e=S.estilo, pri=colorOk(e.pri), cx=T.w/2;
+  const fT=(FUENTES[e.ft]||FUENTES.Sistema).css, fB=(FUENTES[e.fb]||FUENTES.Sistema).css;
+  const fEmoji=`"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+  const ops=[{t:"rect",x:0,y:0,w:T.w,h:T.h,fill:"#fff"}];   // fondo siempre blanco
+  ops.push({t:"rect",x:0,y:0,w:T.w,h:T.franja,fill:pri});    // franja decorativa
+  // Logo (recorte circular) o emoji en círculo
+  if(logo) ops.push({t:"logo",cx,cy:T.logoY,r:T.logoR,src:L.logo});
+  else {
+    ops.push({t:"circle",cx,cy:T.logoY,r:T.logoR,fill:mezclaBlanco(pri,.12)});
+    const em=T.logoR*1.1; ops.push({t:"text",s:L.emoji||"🍽️",x:cx,y:T.logoY+em*.36,mm:em,font:fEmoji,peso:400,fill:"#111"});
+  }
+  // Nombre: hasta 2 líneas, centrado en su caja
+  const nom=ajustarTexto(L.nombre,{font:fT,peso:700,maxPt:T.nomMax,minPt:T.nomMin,ancho:T.nomAncho,lineas:2,alto:T.nomH});
+  const lh=nom.mm*1.12, top=T.nomY+(T.nomH-lh*nom.lines.length)/2;
+  nom.lines.forEach((s,i)=>ops.push({t:"text",s,x:cx,y:top+lh*i+lh/2+nom.mm*.35,mm:nom.mm,font:fT,peso:700,fill:"#111"}));
+  // Llamado
+  const ll=ajustarTexto("Escaneá para ver la carta",{font:fB,peso:700,maxPt:T.llamPt,minPt:T.llamPt-3,ancho:T.nomAncho});
+  ops.push({t:"text",s:ll.lines[0],x:cx,y:T.llamY,mm:ll.mm,font:fB,peso:700,fill:"#111"});
+  // QR con zona de silencio de 4 módulos
+  const n=matriz.length, cel=T.qrS/(n+8);
+  ops.push({t:"modulos",x:T.qrX+4*cel,y:T.qrY+4*cel,cel,m:matriz,fill:"#111"});
+  // Esquinas en L, por fuera de la zona de silencio
+  const o=T.esqGap+T.esqT/2, x1=T.qrX-o, y1=T.qrY-o, x2=T.qrX+T.qrS+o, y2=T.qrY+T.qrS+o, Lg=T.esqL;
+  [[x1,y1,1,1],[x2,y1,-1,1],[x1,y2,1,-1],[x2,y2,-1,-1]].forEach(([x,y,dx,dy])=>
+    ops.push({t:"trazo",pts:[[x,y+dy*Lg],[x,y],[x+dx*Lg,y]],stroke:pri,ancho:T.esqT}));
+  // Textos de abajo (y banda roja si es provisorio)
+  const chico=t=>ajustarTexto(t.s,{font:fB,peso:t.peso||400,maxPt:t.pt,minPt:t.pt-2,ancho:T.nomAncho});
+  if(v.provisorio){
+    if(tam==="grande"){ const k=chico({s:v.corto,pt:T.linkPt}); ops.push({t:"text",s:k.lines[0],x:cx,y:T.ayudaY,mm:k.mm,font:fB,peso:400,fill:"#555"}); }
+    ops.push({t:"rect",x:0,y:T.bandaY,w:T.w,h:T.h-T.bandaY,fill:"#c00"});
+    const b=T.bandaPt*PT; ops.push({t:"text",s:"QR PROVISORIO",x:cx,y:T.bandaY+(T.h-T.bandaY)/2+b*.36,mm:b,font:fB,peso:700,fill:"#fff"});
+  } else {
+    if(T.ayudaY){ const a=chico({s:"Apuntá la cámara del celu al código",pt:T.ayudaPt}); ops.push({t:"text",s:a.lines[0],x:cx,y:T.ayudaY,mm:a.mm,font:fB,peso:400,fill:"#555"}); }
+    const k=chico({s:v.corto,pt:T.linkPt}); ops.push({t:"text",s:k.lines[0],x:cx,y:T.linkY,mm:k.mm,font:fB,peso:400,fill:"#555"});
+  }
+  return {w:T.w,h:T.h,ops};
+}
+
+/* Modelo -> canvas a 300 dpi (se dibuja en píxeles para que el QR quede nítido) */
+function qrCanvas(m,logoImg){
+  const k=QR_DPI/25.4, P=v=>v*k, c=document.createElement("canvas");
+  c.width=Math.round(m.w*k); c.height=Math.round(m.h*k);
+  const x=c.getContext("2d");
+  for(const o of m.ops){
+    x.save();
+    if(o.t==="rect"){ x.fillStyle=o.fill; x.fillRect(P(o.x),P(o.y),P(o.w),P(o.h)); }
+    else if(o.t==="circle"){ x.fillStyle=o.fill; x.beginPath(); x.arc(P(o.cx),P(o.cy),P(o.r),0,Math.PI*2); x.fill(); }
+    else if(o.t==="logo"&&logoImg){
+      x.beginPath(); x.arc(P(o.cx),P(o.cy),P(o.r),0,Math.PI*2); x.clip();
+      const d=2*o.r, s=Math.max(d/logoImg.width,d/logoImg.height), w=logoImg.width*s, h=logoImg.height*s;   // "cover"
+      x.drawImage(logoImg,P(o.cx-w/2),P(o.cy-h/2),P(w),P(h));
+    }
+    else if(o.t==="text"){ x.fillStyle=o.fill; x.font=`${o.peso} ${P(o.mm)}px ${o.font}`; x.textAlign="center"; x.textBaseline="alphabetic"; x.fillText(o.s,P(o.x),P(o.y)); }
+    else if(o.t==="modulos"){
+      x.fillStyle=o.fill; const px=v=>Math.round(P(v));   // bordes en píxeles enteros: sin líneas finas entre módulos
+      o.m.forEach((fila,r)=>fila.forEach((on,col)=>{ if(!on) return;
+        const x0=px(o.x+col*o.cel), x1=px(o.x+(col+1)*o.cel), y0=px(o.y+r*o.cel), y1=px(o.y+(r+1)*o.cel);
+        x.fillRect(x0,y0,x1-x0,y1-y0); }));
+    }
+    else if(o.t==="trazo"){
+      x.strokeStyle=o.stroke; x.lineWidth=P(o.ancho); x.lineJoin="miter"; x.lineCap="butt"; x.beginPath();
+      o.pts.forEach(([a,b],i)=>i?x.lineTo(P(a),P(b)):x.moveTo(P(a),P(b))); x.stroke();
+    }
+    x.restore();
+  }
+  return c;
+}
+
+/* Modelo -> SVG en mm (texto escapado con esc) */
+function qrSvg(m){
+  const f=n=>+n.toFixed(3);
+  let defs="", body="";
+  for(const o of m.ops){
+    if(o.t==="rect") body+=`<rect x="${f(o.x)}" y="${f(o.y)}" width="${f(o.w)}" height="${f(o.h)}" fill="${esc(o.fill)}"/>`;
+    else if(o.t==="circle") body+=`<circle cx="${f(o.cx)}" cy="${f(o.cy)}" r="${f(o.r)}" fill="${esc(o.fill)}"/>`;
+    else if(o.t==="logo"){
+      defs+=`<clipPath id="qrLogoClip"><circle cx="${f(o.cx)}" cy="${f(o.cy)}" r="${f(o.r)}"/></clipPath>`;
+      body+=`<image href="${esc(o.src)}" xlink:href="${esc(o.src)}" x="${f(o.cx-o.r)}" y="${f(o.cy-o.r)}" width="${f(2*o.r)}" height="${f(2*o.r)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#qrLogoClip)"/>`;
+    }
+    else if(o.t==="text") body+=`<text x="${f(o.x)}" y="${f(o.y)}" font-family="${esc(o.font)}" font-weight="${o.peso}" font-size="${f(o.mm)}" fill="${esc(o.fill)}" text-anchor="middle">${esc(o.s)}</text>`;
+    else if(o.t==="modulos"){
+      let d="";   // un único path: tramos horizontales de módulos oscuros
+      o.m.forEach((fila,r)=>{ for(let c=0;c<fila.length;c++){ if(!fila[c]) continue; let e=c; while(e+1<fila.length&&fila[e+1]) e++;
+        d+=`M${f(o.x+c*o.cel)} ${f(o.y+r*o.cel)}h${f((e-c+1)*o.cel)}v${f(o.cel)}h${f(-(e-c+1)*o.cel)}z`; c=e; } });
+      body+=`<path d="${d}" fill="${esc(o.fill)}" shape-rendering="crispEdges"/>`;
+    }
+    else if(o.t==="trazo") body+=`<path d="${o.pts.map(([a,b],i)=>(i?"L":"M")+f(a)+" "+f(b)).join("")}" fill="none" stroke="${esc(o.stroke)}" stroke-width="${f(o.ancho)}" stroke-linejoin="miter" stroke-linecap="butt"/>`;
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${m.w}mm" height="${m.h}mm" viewBox="0 0 ${m.w} ${m.h}">`+
+    (defs?`<defs>${defs}</defs>`:"")+body+`</svg>`;
+}
+
+/* Genera PNG (canvas) + SVG a partir del link validado */
+async function qrGenerar(v,tam){
+  const e=S.estilo, fams=[...new Set([(FUENTES[e.ft]||FUENTES.Sistema).css,(FUENTES[e.fb]||FUENTES.Sistema).css])];
+  try{   // esperamos las fuentes (máx. 1,5 s) para que el canvas no use la de respaldo
+    await Promise.race([Promise.all(fams.map(c=>document.fonts.load(`700 40px ${c}`))),new Promise(r=>setTimeout(r,1500))]);
+  }catch(err){}
+  const q=qrcode(0,"M"); q.addData(v.url); q.make();
+  const n=q.getModuleCount(), matriz=[];
+  for(let r=0;r<n;r++){ const fila=[]; for(let c=0;c<n;c++) fila.push(q.isDark(r,c)); matriz.push(fila); }
+  let logoImg=null;
+  if(LOGO_OK.test(S.local.logo||"")){ try{ logoImg=await cargarImg(S.local.logo); }catch(err){ logoImg=null; } }
+  const m=qrModelo(v,tam,matriz,!!logoImg);
+  return {canvas:qrCanvas(m,logoImg), svg:qrSvg(m), url:v.url, corto:v.corto, tam};
+}
+
+/* Estado de la pestaña QR */
+let qrTok=0, qrUltimo=null, qrT;
+function qrProgramar(){ clearTimeout(qrT); qrT=setTimeout(qrActualizar,300); }
+function qrPintarEstado(v){
+  const el=$("#qrEstado"); if(!el) return;
+  let h;
+  if(!v.ok) h=!String(S.local.url||"").trim() ?`<div class="hint" style="margin:6px 0 10px">${esc(v.msg)}</div>` : `<div class="fb"><span class="bad">✕ ${esc(v.msg)}</span></div>`;
+  else if(v.provisorio) h=`<div class="aviso"><b>QR provisorio: no lo imprimas</b>${esc(v.msg)}</div>`;
+  else h=`<div class="fb"><span class="ok">✓ ${esc(v.msg)}</span></div>`;
+  if(v.ok&&v.agregado) h+=`<div class="hint" style="margin:-4px 0 10px">Le agregamos https:// adelante.</div>`;
+  el.innerHTML=h;
+}
+function qrBotones(v){
+  const listo=!!(v.ok&&qrUltimo&&window.qrcode);
+  $$('#panel [data-qr="png"],#panel [data-qr="svg"],#panel [data-qr="print"]').forEach(b=>b.setAttribute("aria-disabled",String(!listo)));
+  $$('#panel [data-qr="abrir"]').forEach(b=>b.setAttribute("aria-disabled",String(!v.ok)));
+}
+async function qrActualizar(){
+  clearTimeout(qrT);
+  const prev=$("#qrPrev"); if(tab!=="qr"||!prev) return;
+  const tok=++qrTok, v=validarUrl(S.local.url), tam=S.local.qrTam==="chico"?"chico":"grande";
+  qrUltimo=null; qrPintarEstado(v); qrBotones(v);
+  const lib=cargarQrLib();   // se pide al abrir la pestaña, aunque el link todavía no sea válido
+  lib.catch(()=>{});
+  if(!v.ok){ prev.innerHTML=`<div class="qrvacio">${esc(v.msg)}</div>`; return; }
+  if(!window.qrcode){
+    prev.innerHTML=`<div class="qrvacio">Cargando el generador de QR…</div>`;
+    try{ await lib; }catch(err){
+      if(tok===qrTok&&$("#qrPrev")) $("#qrPrev").innerHTML=`<div class="qrvacio">No se pudo cargar el generador de QR. Revisá la conexión a internet y tocá Reintentar.<br><button class="btn sec mini" data-qr="retry">Reintentar</button></div>`;
+      return;
+    }
+  }
+  if(tok!==qrTok) return;
+  try{
+    const r=await qrGenerar(v,tam);
+    if(tok!==qrTok||!$("#qrPrev")) return;   // llegó tarde: el dueño siguió escribiendo
+    qrUltimo=r; $("#qrPrev").replaceChildren(r.canvas); qrBotones(v);
+  }catch(err){
+    if(tok===qrTok&&$("#qrPrev")) $("#qrPrev").innerHTML=`<div class="qrvacio">No se pudo generar el QR. Probá con un link más corto.</div>`;
+  }
+}
+
+/* Acciones de los botones de la pestaña QR */
+const QR_ERR_IMG = "No se pudo generar la imagen. Probá sin logo.";
+const qrSlug = () => norm(S.local.nombre||"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"") || "carta";
+function qrDescargar(blob,nombre){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nombre;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+function qrAccion(a,b){
+  if(a==="retry"){ qrActualizar(); return; }
+  if(b.getAttribute("aria-disabled")==="true") return;
+  const v=validarUrl(S.local.url);
+  if(a==="abrir"){ if(v.ok) window.open(v.url,"_blank","noopener,noreferrer"); return; }
+  const u=qrUltimo, tam=S.local.qrTam==="chico"?"chico":"grande";
+  if(!u||!v.ok||u.url!==v.url||u.tam!==tam){ qrActualizar(); return; }   // la vista previa todavía no está al día
+  if(a==="png"){
+    try{ u.canvas.toBlob(bl=>{ if(!bl){ toast(QR_ERR_IMG); return; } qrDescargar(bl,`qr-${qrSlug()}.png`); toast("QR descargado"); },"image/png"); }
+    catch(err){ toast(QR_ERR_IMG); }
+  }
+  else if(a==="svg"){ qrDescargar(new Blob([u.svg],{type:"image/svg+xml"}),`qr-${qrSlug()}.svg`); toast("QR descargado"); }
+  else if(a==="print") qrImprimir(u);
+}
+
+/* Hoja A4 con las tarjetas (2×2 grande, 3×3 chico) y líneas de corte compartidas */
+let qrImprimiendo=false, qrAfterPrint=null;   // evita doble toque y guarda el listener de afterprint
+/* Deja todo como antes de imprimir: saca la clase, la hoja y el listener */
+function qrLimpiarImpresion(){
+  if(qrAfterPrint){ window.removeEventListener("afterprint",qrAfterPrint); qrAfterPrint=null; }
+  document.body.classList.remove("imprimiendo-qr");
+  $("#printArea")?.remove();
+  qrImprimiendo=false;
+}
+async function qrImprimir(u){
+  if(qrImprimiendo) return;   // segundo toque mientras se prepara o imprime: se ignora
+  qrImprimiendo=true;
+  try{ await qrPrepararImpresion(u); }
+  catch(err){ qrLimpiarImpresion(); }
+}
+async function qrPrepararImpresion(u){
+  let src;
+  try{ src=u.canvas.toDataURL("image/png"); }catch(err){ toast(QR_ERR_IMG); qrLimpiarImpresion(); return; }
+  const T=QR_TAMS[u.tam], gw=T.w*T.cols, gh=T.h*T.rows, x0=(210-gw)/2, y0=(297-gh)/2;
+  let h=`<style>@page{size:A4;margin:0}</style><div class="hoja"><div class="cab" style="top:${(y0-2.5)/2}mm">${esc(S.local.nombre)} · ${esc(u.corto)} · Recortá por las líneas punteadas.</div>`;
+  for(let r=0;r<T.rows;r++) for(let c=0;c<T.cols;c++)
+    h+=`<img src="${src}" alt="" style="left:${x0+c*T.w}mm;top:${y0+r*T.h}mm;width:${T.w}mm;height:${T.h}mm">`;
+  for(let c=0;c<=T.cols;c++) h+=`<i class="corte cv" style="left:${x0+c*T.w}mm;top:${y0-2}mm;height:${gh+4}mm"></i>`;
+  for(let r=0;r<=T.rows;r++) h+=`<i class="corte ch" style="top:${y0+r*T.h}mm;left:${x0-2}mm;width:${gw+4}mm"></i>`;
+  h+=`</div>`;
+  if(qrAfterPrint){ window.removeEventListener("afterprint",qrAfterPrint); qrAfterPrint=null; }
+  $("#printArea")?.remove();   // por si quedó una hoja de una impresión anterior
+  const pa=document.createElement("div"); pa.id="printArea"; pa.innerHTML=h; document.body.appendChild(pa);
+  toast("Abriendo impresión…");
+  await Promise.all([...pa.querySelectorAll("img")].map(im=>im.complete?null:new Promise(r=>{im.onload=im.onerror=r})));
+  qrAfterPrint=()=>qrLimpiarImpresion();
+  window.addEventListener("afterprint",qrAfterPrint);
+  document.body.classList.add("imprimiendo-qr");   // recién ahora el @media print muestra solo la hoja
+  window.print();
 }
 
 /* ---------- Eventos del panel ---------- */
@@ -867,6 +1237,10 @@ PN.addEventListener("input",e=>{
   const t=e.target;
   if(t.hasAttribute("data-code")){
     clearTimeout(codeT); codeT=setTimeout(()=>aplicarCodigo(t.value),280); return;
+  }
+  if(t.dataset.path==="local.url"){
+    // Link del QR: no se re-renderiza el panel (se perdería el foco), solo estado + vista previa con debounce
+    S.local.url=t.value; save(); qrProgramar(); return;
   }
   if(t.dataset.path){
     const v=t.type==="checkbox"?t.checked:t.type==="range"?+t.value:t.value;
@@ -898,6 +1272,12 @@ PN.addEventListener("toggle",e=>{if(e.target.matches("details.prod")&&e.target.o
 PN.addEventListener("click",async e=>{
   const b=e.target.closest("button"); if(!b) return;
   const d=b.dataset, prev=armed; armed=null;
+  if(d.qr){ qrAccion(d.qr,b); return; }
+  if(d.qrtam){
+    S.local.qrTam=d.qrtam==="chico"?"chico":"grande";
+    b.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+    save(); qrActualizar(); return;
+  }
   if(d.export!==undefined){
     const code=genCodigo(); const ta=PN.querySelector("[data-code]"); ta.value=code; aplicarCodigo(code,{silent:true});
     try{ await navigator.clipboard.writeText(code); toast("📋 Código copiado"); }catch(err){ ta.focus(); ta.select(); toast("Código generado: copialo del recuadro"); }
