@@ -2,8 +2,10 @@
 
 Carta de menú virtual para restaurantes. Demo actual: hamburguesería "La Brasa Burger".
 
-- Todo vive en `index.html` (HTML + CSS + JS en un solo archivo, sin dependencias).
-- Se publica con GitHub Pages desde la rama `main`.
+- Todo vive en `index.html` (HTML + CSS + JS en un solo archivo, sin dependencias para el cliente).
+  Excepción: funciones del panel del dueño pueden cargar una librería desde cdnjs **solo cuando se usan** (ej.: generador de QR).
+- Se publica con **Cloudflare Pages** desde la rama `main`. Cada rama aparte genera un link de vista previa.
+- Dominio: `irodev.com.ar` (un subdominio por restaurante). Los QR siempre apuntan al dominio, nunca a `.pages.dev`.
 - Los textos de la interfaz van en español rioplatense (vos, tocá, elegí).
 - Precios en pesos argentinos.
 - Uso principal: celular (el cliente escanea un QR en la mesa).
