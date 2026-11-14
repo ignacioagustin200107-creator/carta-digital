@@ -16,3 +16,7 @@ Cada pedido pasa por este equipo, en orden:
 3. `revisor` controla el código.
 4. `tester` lo prueba en celular y compu.
 Un cambio por commit, con un mensaje claro en español.
+
+Especialistas que se suman según el tipo de cambio:
+- `arquitecto-datos`: antes de programar cualquier cosa de base de datos, API, login o suspensión.
+- `estilista-gastronomico`: junto con el `disenador`, para plantillas nuevas y mejoras visuales.
